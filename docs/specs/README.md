@@ -12,7 +12,7 @@ This folder contains five coordinated planning documents for RockCode, a new Rus
 4. `04-ui-design-system.md` — RockCode visual identity and interaction design: industrial grunge, manga linework, funky Gen-Z, Moonframe skin strategy, workbench layout, screens, motion, accessibility and visual QA.
 5. `05-ui-package-architecture.md` — Moonframe consumption and RockCode-specific UI package boundaries, component inventory, workbench composition, editor/terminal adapters, API contracts and UI milestones.
 
-## Governing decisions
+## M0 architecture and contract baseline\n\nThe detailed M0 package is in [`m0/README.md`](m0/README.md). It includes eight contract documents and machine-readable API/event/domain/security schemas. Its authored state is not equivalent to a validated implementation: validators and proof-of-concept gates remain outstanding.\n\n## Governing decisions
 
 - Build a new platform; do not merge or fork whole upstream repositories as the default approach.
 - One reusable Rust engine powers Desktop, Web and CLI.
