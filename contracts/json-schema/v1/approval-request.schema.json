@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rockcode.dev/contracts/json-schema/v1/approval-request.schema.json",
+  "title": "RockCode Approval Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "approval_id",
+    "session_id",
+    "run_id",
+    "tool_call_id",
+    "status",
+    "title",
+    "exact_action",
+    "target",
+    "workspace_id",
+    "executor",
+    "risk",
+    "capability",
+    "requested_at",
+    "expires_at",
+    "allowed_decisions",
+    "policy_revision"
+  ],
+  "properties": {
+    "approval_id": {
+      "type": "string",
+      "pattern": "^apr_[A-Za-z0-9_-]{16,96}$"
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^ses_[A-Za-z0-9_-]{16,96}$"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^run_[A-Za-z0-9_-]{16,96}$"
+    },
+    "tool_call_id": {
+      "type": "string",
+      "pattern": "^tcl_[A-Za-z0-9_-]{16,96}$"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "denied",
+        "expired",
+        "revoked",
+        "cancelled"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "exact_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 12000
+    },
+    "target": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "workspace_id": {
+      "type": "string",
+      "pattern": "^wsp_[A-Za-z0-9_-]{16,96}$"
+    },
+    "executor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executor_id",
+        "kind",
+        "display_name"
+      ],
+      "properties": {
+        "executor_id": {
+          "type": "string",
+          "pattern": "^exe_[A-Za-z0-9_-]{16,96}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "local",
+            "container",
+            "remote"
+          ]
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "trust_boundary_label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        }
+      }
+    },
+    "risk": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical",
+        "unknown"
+      ]
+    },
+    "capability": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "resource_scope": {
+      "type": "object"
+    },
+    "requested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "allowed_decisions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "approve_once",
+          "approve_for_session",
+          "deny"
+        ]
+      }
+    },
+    "policy_revision": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "requester_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128
+    },
+    "explanation": {
+      "type": "string",
+      "maxLength": 4000
+    }
+  }
+}
