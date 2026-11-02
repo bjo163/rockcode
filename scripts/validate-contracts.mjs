@@ -8,6 +8,7 @@ import process from "node:process";
 const root = process.cwd();
 const redoclyVersion = "2.72.1";
 const ajvCliVersion = "5.0.0";
+const ajvFormatsVersion = "3.0.1";
 
 function fail(message) {
   console.error("ERROR: " + message);
@@ -17,9 +18,11 @@ function fail(message) {
 function runNpx(packageName, commandArgs, label) {
   const executable = process.platform === "win32" ? "npx.cmd" : "npx";
   console.log("\n[contract-validation] " + label);
+  const packages = Array.isArray(packageName) ? packageName : [packageName];
+  const packageArgs = packages.flatMap((name) => ["--package", name]);
   const result = spawnSync(
     executable,
-    ["--yes", "--package", packageName, ...commandArgs],
+    ["--yes", ...packageArgs, ...commandArgs],
     {
       cwd: root,
       env: {
@@ -143,7 +146,8 @@ function main() {
   const fixtures = validateFixtureInventory();
 
   const redocly = "@redocly/cli@" + redoclyVersion;
-  const ajv = "ajv-cli@" + ajvCliVersion;
+  const ajv = ["ajv-cli@" + ajvCliVersion, "ajv-formats@" + ajvFormatsVersion];
+  const ajvLabel = ajv.join(" + ");
 
   runNpx(redocly, ["redocly", "lint", openapi], "OpenAPI lint (" + redocly + ")");
   runNpx(redocly, ["redocly", "lint", asyncapi], "AsyncAPI lint (" + redocly + ")");
@@ -155,7 +159,7 @@ function main() {
 
     runNpx(
       ajv,
-      ["ajv", "compile", "--spec=draft2020", "-s", schemaPath],
+      ["ajv", "compile", "--spec=draft2020", "-c", "ajv-formats", "-s", schemaPath],
       "Compile " + fixture.stem + " schema (" + ajv + ")"
     );
     runNpx(
