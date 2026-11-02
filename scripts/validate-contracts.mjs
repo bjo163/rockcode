@@ -160,17 +160,17 @@ function main() {
     runNpx(
       ajv,
       ["ajv", "compile", "--spec=draft2020", "-c", "ajv-formats", "-s", schemaPath],
-      "Compile " + fixture.stem + " schema (" + ajv + ")"
+      "Compile " + fixture.stem + " schema (" + ajvLabel + ")"
     );
     runNpx(
       ajv,
-      ["ajv", "test", "--spec=draft2020", "-s", schemaPath, "-d", validPath, "--valid"],
-      "Accept valid " + fixture.stem + " fixture"
+      ["ajv", "test", "--spec=draft2020", "-c", "ajv-formats", "-s", schemaPath, "-d", validPath, "--valid"],
+      "Accept valid " + fixture.stem + " fixture (" + ajvLabel + ")"
     );
     runNpx(
       ajv,
-      ["ajv", "test", "--spec=draft2020", "-s", schemaPath, "-d", invalidPath, "--invalid"],
-      "Reject invalid " + fixture.stem + " fixture"
+      ["ajv", "test", "--spec=draft2020", "-c", "ajv-formats", "-s", schemaPath, "-d", invalidPath, "--invalid"],
+      "Reject invalid " + fixture.stem + " fixture (" + ajvLabel + ")"
     );
   }
 
