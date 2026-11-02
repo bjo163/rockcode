@@ -22,6 +22,14 @@ RockCode is being designed as one reusable agent engine powering Windows Desktop
 5. **Explicit contracts.** Versioned HTTP APIs, event schemas, SDKs, plugin ABI, and persistence migrations are treated as product interfaces.
 6. **Composable extensions.** Capability-scoped WASM/WIT plugins, MCP integrations, skills, and provider adapters extend the platform without coupling the kernel to implementations.
 
+## Visual concept — Desktop application
+
+The poster below is an **early visual direction**, not a screenshot of an implemented application. It communicates the intended RockCode identity: Industrial Grunge × Manga Linework × Funky Gen-Z, using the Moonframe Moonpunk visual foundation.
+
+![RockCode desktop visual concept](assets/concept/rockcode-desktop-poster.jpg)
+
+[Open the poster asset](assets/concept/rockcode-desktop-poster.jpg)
+
 ## Specification pack
 
 The current architecture baseline is maintained in [`docs/specs/`](docs/specs/):
