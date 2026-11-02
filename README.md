@@ -33,7 +33,7 @@ The current architecture baseline is maintained in [`docs/specs/`](docs/specs/):
 | [03 — Final Architecture Specification](docs/specs/03-final-architecture-specification.md) | Proposed system architecture, Rust crate boundaries, domain model, protocol, storage, execution, plugins, security, clients, and roadmap. |
 | [04 — UI Design System](docs/specs/04-ui-design-system.md) | Industrial grunge × manga linework × funky Gen-Z direction, Moonframe integration, skins, layout, interaction, accessibility, motion, and visual QA. |
 | [05 — UI Package Architecture](docs/specs/05-ui-package-architecture.md) | Moonframe dependency, RockCode UI packages, component inventory, workbench, editor/terminal adapters, and UI implementation gates. |
-| [Specification Pack README](docs/specs/README.md) | Scope, governing decisions, status, and limitations of the documents. |
+| [M0 Architecture & Contracts](docs/specs/m0/README.md) | System context, crate boundaries, REST/WS protocol, domain invariants, threat model, platform matrix, Moonframe consumption, machine schemas, and POC gates. |\n| [Specification Pack README](docs/specs/README.md) | Scope, governing decisions, status, and limitations of the documents. |
 
 ## Initial technology direction
 
@@ -73,7 +73,7 @@ Upstream features, release status, licensing, and security posture must be reval
 - [x] Feature parity matrix
 - [x] Gap analysis
 - [x] Proposed final architecture specification
-- [ ] Validate Rust crate boundaries with minimal proof of concept
+- [x] M0 system, domain, protocol, security, platform and UI dependency contracts authored\n- [ ] Validate OpenAPI, AsyncAPI and JSON Schemas with pinned validators\n- [ ] Validate Rust crate boundaries with minimal proof of concept
 - [ ] Freeze protocol and domain contracts
 - [ ] Implement the Rust agent kernel
 - [ ] Implement server, execution workers, and clients
