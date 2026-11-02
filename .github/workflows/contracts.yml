@@ -1,0 +1,56 @@
+name: Contract Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "contracts/**"
+      - "docs/specs/**"
+      - "README.md"
+      - "scripts/validate-contracts.mjs"
+      - ".redocly.yaml"
+      - ".github/workflows/contracts.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "contracts/**"
+      - "docs/specs/**"
+      - "README.md"
+      - "scripts/validate-contracts.mjs"
+      - ".redocly.yaml"
+      - ".github/workflows/contracts.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contract-validation-\${{ github.workflow }}-\${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate API, event, schema, and documentation contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      REDOCLY_TELEMETRY: "off"
+      REDOCLY_SUPPRESS_NOTIFICATIONS: "true"
+      NO_COLOR: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - name: Show toolchain
+        run: |
+          node --version
+          npm --version
+
+      - name: Validate contracts
+        run: node scripts/validate-contracts.mjs
