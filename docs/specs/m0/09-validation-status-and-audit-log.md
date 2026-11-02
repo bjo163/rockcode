@@ -56,3 +56,23 @@ An event-envelope invariant was corrected during authoring: the envelope must co
 **M1 source coding: NOT STARTED.**
 
 The architecture has reached the coding-ready handoff boundary, but coding must start with contract validation tooling and the bounded proof-of-concept vertical slice. This log does not claim build, unit tests, E2E, sandbox, or security tests passed.
+
+
+---
+
+## 5. M1.1 contract-validation tooling scaffold
+
+**Added:** 2 November 2026
+
+| Artifact | Status |
+|---|---|
+| scripts/validate-contracts.mjs | Committed |
+| .github/workflows/contracts.yml | Committed; push/PR/manual triggers |
+| .redocly.yaml | Committed |
+| Five positive JSON fixtures | Committed |
+| Five negative JSON fixtures | Committed |
+| Pinned Redocly CLI 2.72.1 | Configured; runtime not yet verified |
+| Pinned Ajv CLI 5.0.0 | Configured; runtime not yet verified |
+| Successful GitHub Actions workflow run | Pending |
+
+The workflow validates OpenAPI, AsyncAPI, five Draft 2020-12 schemas with positive/negative fixtures, and repository-relative Markdown links. The workflow source has been committed, but a committed workflow is not evidence that the runner passed. M1.1 is **implemented as a CI scaffold, awaiting execution evidence**.
