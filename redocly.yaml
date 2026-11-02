@@ -1,0 +1,11 @@
+extends:
+  - recommended
+
+rules:
+  # WebSocket upgrade uses HTTP 101; the successful handshake is not a 2xx response.
+  operation-2xx-response: warn
+  # Keep summaries mandatory. Each operation has an explicit summary in the source contract.
+  operation-summary: error
+  # Add 4xx responses to operations as error details are further formalized.
+  operation-4xx-response: warn
+  info-license: off
