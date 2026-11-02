@@ -24,10 +24,7 @@ channels:
     description: One authorized session event stream. Cursor is a query parameter.
     parameters:
       session_id:
-        description: Opaque session identifier.
-        schema:
-          type: string
-          pattern: '^ses_[A-Za-z0-9_-]{16,96}$'
+        description: Opaque session identifier included in the channel address.
     messages:
       eventFrame:
         $ref: '#/components/messages/EventFrame'
