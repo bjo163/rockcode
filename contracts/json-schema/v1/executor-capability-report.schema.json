@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rockcode.dev/contracts/json-schema/v1/executor-capability-report.schema.json",
+  "title": "RockCode Executor Capability Report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "executor_id",
+    "kind",
+    "status",
+    "platform",
+    "capabilities",
+    "sandbox_profiles",
+    "effective_controls",
+    "reported_at",
+    "agent_version"
+  ],
+  "properties": {
+    "executor_id": {
+      "type": "string",
+      "pattern": "^exe_[A-Za-z0-9_-]{16,96}$"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "local",
+        "container",
+        "remote"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "registered",
+        "connecting",
+        "healthy",
+        "degraded",
+        "draining",
+        "disconnected",
+        "revoked"
+      ]
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "os",
+        "architecture"
+      ],
+      "properties": {
+        "os": {
+          "type": "string",
+          "enum": [
+            "windows",
+            "linux",
+            "macos"
+          ]
+        },
+        "architecture": {
+          "type": "string",
+          "enum": [
+            "x86_64",
+            "aarch64",
+            "arm64"
+          ]
+        },
+        "os_version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "kernel_version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        },
+        "container_runtime": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        }
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "filesystem.read",
+          "filesystem.write",
+          "process.exec",
+          "process.pty",
+          "git",
+          "lsp",
+          "browser",
+          "network.egress_control",
+          "artifact.upload",
+          "artifact.download",
+          "snapshot",
+          "container.spawn"
+        ]
+      }
+    },
+    "sandbox_profiles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "profile_id",
+          "available",
+          "description"
+        ],
+        "properties": {
+          "profile_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 1000
+            }
+          }
+        }
+      }
+    },
+    "effective_controls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "control",
+          "enforced",
+          "evidence"
+        ],
+        "properties": {
+          "control": {
+            "type": "string",
+            "enum": [
+              "filesystem_boundary",
+              "process_tree",
+              "network_egress",
+              "resource_limits",
+              "credential_isolation",
+              "identity_isolation",
+              "container_boundary",
+              "read_only_root"
+            ]
+          },
+          "enforced": {
+            "type": "boolean"
+          },
+          "evidence": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 1000
+            }
+          }
+        }
+      }
+    },
+    "resource_limits": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "cpu_quota_millis": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "memory_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "disk_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "process_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "max_runtime_seconds": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "reported_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "agent_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "lease_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^lea_[A-Za-z0-9_-]{16,96}$"
+    }
+  }
+}
