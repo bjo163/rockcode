@@ -14,8 +14,7 @@
     "type",
     "occurred_at",
     "correlation_id",
-    "causation_id",
-    "payload"
+    "causation_id"
   ],
   "properties": {
     "event_id": {
