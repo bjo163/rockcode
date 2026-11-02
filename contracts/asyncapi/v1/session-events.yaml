@@ -121,7 +121,7 @@ components:
             type: string
             const: event
           event:
-            $ref: '../json-schema/v1/event-envelope.schema.json'
+            $ref: '../../json-schema/v1/event-envelope.schema.json'
     HelloFrame:
       name: HelloFrame
       contentType: application/json
