@@ -31,7 +31,9 @@ The current architecture baseline is maintained in [`docs/specs/`](docs/specs/):
 | [01 — Feature Parity Matrix](docs/specs/01-feature-parity-matrix.md) | Evidence-oriented comparison of upstream coding-agent projects and target capability tiers. |
 | [02 — Gap Analysis](docs/specs/02-gap-analysis.md) | Missing capabilities, risks, priorities, acceptance criteria, and implementation gates. |
 | [03 — Final Architecture Specification](docs/specs/03-final-architecture-specification.md) | Proposed system architecture, Rust crate boundaries, domain model, protocol, storage, execution, plugins, security, clients, and roadmap. |
-| [04 — UI Design System](docs/specs/04-ui-design-system.md) | Industrial grunge × manga linework × funky Gen-Z direction, Moonframe integration, skins, layout, interaction, accessibility, motion, and visual QA. |\n| [05 — UI Package Architecture](docs/specs/05-ui-package-architecture.md) | Moonframe dependency, RockCode UI packages, component inventory, workbench, editor/terminal adapters, and UI implementation gates. |\n| [Specification Pack README](docs/specs/README.md) | Scope, governing decisions, status, and limitations of the documents. |
+| [04 — UI Design System](docs/specs/04-ui-design-system.md) | Industrial grunge × manga linework × funky Gen-Z direction, Moonframe integration, skins, layout, interaction, accessibility, motion, and visual QA. |
+| [05 — UI Package Architecture](docs/specs/05-ui-package-architecture.md) | Moonframe dependency, RockCode UI packages, component inventory, workbench, editor/terminal adapters, and UI implementation gates. |
+| [Specification Pack README](docs/specs/README.md) | Scope, governing decisions, status, and limitations of the documents. |
 
 ## Initial technology direction
 
