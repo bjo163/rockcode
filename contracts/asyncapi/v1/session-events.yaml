@@ -2,7 +2,6 @@ asyncapi: 3.0.0
 info:
   title: RockCode Session Event Stream
   version: 1.0.0
-  summary: Bidirectional WebSocket contract for a single RockCode session.
   description: >
     Server event frames carry durable aggregate events. Control frames manage
     replay/resync and connection lifecycle. Client frames acknowledge applied
@@ -50,6 +49,8 @@ channels:
         $ref: '#/components/messages/PongFrame'
 operations:
   serverSendsEvent:
+    security:
+      - rockcodeBearer: []
     action: send
     channel:
       $ref: '#/channels/sessionEvents'
@@ -57,6 +58,8 @@ operations:
     messages:
       - $ref: '#/channels/sessionEvents/messages/eventFrame'
   serverSendsHello:
+    security:
+      - rockcodeBearer: []
     action: send
     channel:
       $ref: '#/channels/sessionEvents'
@@ -64,6 +67,8 @@ operations:
     messages:
       - $ref: '#/channels/sessionEvents/messages/helloFrame'
   serverSendsResync:
+    security:
+      - rockcodeBearer: []
     action: send
     channel:
       $ref: '#/channels/sessionEvents'
@@ -71,42 +76,60 @@ operations:
     messages:
       - $ref: '#/channels/sessionEvents/messages/resyncFrame'
   serverSendsHeartbeat:
+    security:
+      - rockcodeBearer: []
     action: send
     channel:
       $ref: '#/channels/sessionEvents'
     messages:
       - $ref: '#/channels/sessionEvents/messages/heartbeatFrame'
   serverSendsCommandResult:
+    security:
+      - rockcodeBearer: []
     action: send
     channel:
       $ref: '#/channels/sessionEvents'
     messages:
       - $ref: '#/channels/sessionEvents/messages/commandResultFrame'
   clientSendsAck:
+    security:
+      - rockcodeBearer: []
     action: receive
     channel:
       $ref: '#/channels/sessionEvents'
     messages:
       - $ref: '#/channels/sessionEvents/messages/ackFrame'
   clientSendsApprovalReply:
+    security:
+      - rockcodeBearer: []
     action: receive
     channel:
       $ref: '#/channels/sessionEvents'
     messages:
       - $ref: '#/channels/sessionEvents/messages/approvalReplyFrame'
   clientSendsQuestionReply:
+    security:
+      - rockcodeBearer: []
     action: receive
     channel:
       $ref: '#/channels/sessionEvents'
     messages:
       - $ref: '#/channels/sessionEvents/messages/questionReplyFrame'
   clientSendsPong:
+    security:
+      - rockcodeBearer: []
     action: receive
     channel:
       $ref: '#/channels/sessionEvents'
     messages:
       - $ref: '#/channels/sessionEvents/messages/pongFrame'
 components:
+  securitySchemes:
+    rockcodeBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: scoped token
+      description: Short-lived scoped client token; never a provider credential.
   messages:
     EventFrame:
       name: SessionEventFrame
