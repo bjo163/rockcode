@@ -12,7 +12,7 @@
 - P0 threat controls and fail behavior are assigned;
 - Windows and browser support tiers are explicit;
 - Moonframe dependency strategy and clean-consumer test are specified;
-- POC experiments, owners and pass/fail criteria are recorded;
+- POC experiments, named owners, environments and pass/fail criteria are recorded (the POCs themselves are the first M1 coding work, not a precondition that can be completed without implementation);
 - all index/README links are valid;
 - no contract claims that source code or security controls already exist.
 
