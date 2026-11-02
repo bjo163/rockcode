@@ -15,26 +15,64 @@ function fail(message) {
   process.exitCode = 1;
 }
 
+function npxCliCandidates() {
+  const nodeDir = path.dirname(process.execPath);
+  return [
+    path.join(nodeDir, "node_modules", "npm", "bin", "npx-cli.js"),
+    path.resolve(nodeDir, "..", "lib", "node_modules", "npm", "bin", "npx-cli.js")
+  ];
+}
+
+let npxCliPath;
+function resolveNpxCli() {
+  if (npxCliPath !== undefined) return npxCliPath;
+  const candidates = npxCliCandidates();
+  npxCliPath = candidates.find((candidate) => existsSync(candidate));
+  if (!npxCliPath) {
+    fail("Cannot locate npx-cli.js. Searched: " + candidates.join(", "));
+  }
+  return npxCliPath;
+}
+
 function runNpx(packageName, commandArgs, label) {
-  const executable = process.platform === "win32" ? "npx.cmd" : "npx";
   console.log("\n[contract-validation] " + label);
+
   const packages = Array.isArray(packageName) ? packageName : [packageName];
   const packageArgs = packages.flatMap((name) => ["--package", name]);
-  const result = spawnSync(
-    executable,
-    ["--yes", ...packageArgs, ...commandArgs],
-    {
-      cwd: root,
-      env: {
-        ...process.env,
-        REDOCLY_TELEMETRY: "off",
-        REDOCLY_SUPPRESS_NOTIFICATIONS: "true",
-        NO_COLOR: "1"
-      },
-      stdio: "inherit",
-      windowsHide: true
-    }
-  );
+
+  // Node >= 18.20/20.12/21.7 refuses to spawn .cmd files without a shell
+  // (CVE-2024-27980 hardening), so npx.cmd throws EINVAL on Windows. Running the
+  // same npx-cli.js under process.execPath keeps args as a literal array with no
+  // shell. POSIX keeps calling `npx` directly: that path is already proven by every
+  // CI run, and leaving it untouched avoids changing a working platform on a guess.
+  let file;
+  let args;
+  if (process.platform === "win32") {
+    const cli = resolveNpxCli();
+    if (!cli) return false;
+    file = process.execPath;
+    args = [cli, "--yes", ...packageArgs, ...commandArgs];
+  } else {
+    file = "npx";
+    args = ["--yes", ...packageArgs, ...commandArgs];
+  }
+
+  const result = spawnSync(file, args, {
+    cwd: root,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      REDOCLY_TELEMETRY: "off",
+      REDOCLY_SUPPRESS_NOTIFICATIONS: "true",
+      NO_COLOR: "1"
+    },
+    shell: false,
+    windowsHide: true,
+    maxBuffer: 64 * 1024 * 1024
+  });
+
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
 
   if (result.error) {
     fail(label + ": " + result.error.message);
@@ -42,6 +80,10 @@ function runNpx(packageName, commandArgs, label) {
   }
   if (result.status !== 0) {
     fail(label + ": command exited with status " + (result.status ?? "unknown"));
+    return false;
+  }
+  if (result.signal) {
+    fail(label + ": command was terminated by signal " + result.signal);
     return false;
   }
   return true;
