@@ -27,6 +27,7 @@ paths:
   /health/live:
     get:
       operationId: getLiveness
+      summary: Check process liveness
       tags: [Health]
       security: []
       responses:
@@ -39,6 +40,7 @@ paths:
   /health/ready:
     get:
       operationId: getReadiness
+      summary: Check service readiness
       tags: [Health]
       security: []
       responses:
@@ -53,6 +55,7 @@ paths:
   /capabilities:
     get:
       operationId: getCapabilities
+      summary: Get server capabilities
       tags: [Capabilities]
       responses:
         '200':
@@ -66,6 +69,7 @@ paths:
   /models:
     get:
       operationId: listModels
+      summary: List available models
       tags: [Capabilities]
       responses:
         '200':
@@ -85,6 +89,7 @@ paths:
   /tools:
     get:
       operationId: listTools
+      summary: List available tools
       tags: [Capabilities]
       responses:
         '200':
@@ -104,6 +109,7 @@ paths:
   /workspaces:
     get:
       operationId: listWorkspaces
+      summary: List workspaces
       tags: [Workspaces]
       parameters:
         - in: query
@@ -123,6 +129,7 @@ paths:
           $ref: '#/components/responses/Error'
     post:
       operationId: createWorkspace
+      summary: Create a workspace
       tags: [Workspaces]
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -152,6 +159,7 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
     get:
       operationId: getWorkspace
+      summary: Get a workspace
       tags: [Workspaces]
       responses:
         '200':
@@ -167,6 +175,7 @@ paths:
       - $ref: '#/components/parameters/WorkspaceId'
     post:
       operationId: closeWorkspace
+      summary: Close a workspace
       tags: [Workspaces]
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -178,6 +187,7 @@ paths:
   /executors:
     get:
       operationId: listExecutors
+      summary: List available executors
       tags: [Executors]
       responses:
         '200':
@@ -197,6 +207,7 @@ paths:
   /sessions:
     get:
       operationId: listSessions
+      summary: List sessions
       tags: [Sessions]
       parameters:
         - in: query
@@ -224,6 +235,7 @@ paths:
           $ref: '#/components/responses/Error'
     post:
       operationId: createSession
+      summary: Create a session
       tags: [Sessions]
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -247,6 +259,7 @@ paths:
       - $ref: '#/components/parameters/SessionId'
     get:
       operationId: getSession
+      summary: Get a session
       tags: [Sessions]
       responses:
         '200':
@@ -262,6 +275,7 @@ paths:
       - $ref: '#/components/parameters/SessionId'
     post:
       operationId: submitTurn
+      summary: Submit a user turn
       tags: [Sessions]
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -285,6 +299,7 @@ paths:
       - $ref: '#/components/parameters/SessionId'
     post:
       operationId: cancelRun
+      summary: Request run cancellation
       tags: [Sessions]
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -308,6 +323,7 @@ paths:
       - $ref: '#/components/parameters/SessionId'
     post:
       operationId: steerRun
+      summary: Steer an active run
       tags: [Sessions]
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -332,6 +348,7 @@ paths:
       - $ref: '#/components/parameters/SessionId'
     post:
       operationId: resumeSession
+      summary: Resume a recoverable session
       tags: [Sessions]
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -354,6 +371,7 @@ paths:
       - $ref: '#/components/parameters/SessionId'
     get:
       operationId: getSessionSnapshot
+      summary: Get a session snapshot
       tags: [Sessions]
       parameters:
         - in: query
@@ -373,6 +391,7 @@ paths:
       - $ref: '#/components/parameters/SessionId'
     get:
       operationId: connectSessionEvents
+      summary: Connect to session events
       tags: [Sessions]
       description: WebSocket upgrade endpoint. See contracts/asyncapi/v1/session-events.yaml.
       x-websocket:
@@ -398,6 +417,7 @@ paths:
       - $ref: '#/components/parameters/SessionId'
     get:
       operationId: listSessionTasks
+      summary: List session tasks
       tags: [Sessions]
       responses:
         '200':
@@ -419,6 +439,7 @@ paths:
       - $ref: '#/components/parameters/SessionId'
     get:
       operationId: getSessionAudit
+      summary: Get session audit records
       tags: [Sessions]
       responses:
         '200':
@@ -443,6 +464,7 @@ paths:
         schema: { type: string, pattern: '^apr_[A-Za-z0-9_-]{16,96}$' }
     post:
       operationId: decideApproval
+      summary: Submit an approval decision
       tags: [Approvals]
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -481,6 +503,7 @@ paths:
         schema: { type: string, pattern: '^qst_[A-Za-z0-9_-]{16,96}$' }
     post:
       operationId: answerQuestion
+      summary: Answer an agent question
       tags: [Questions]
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -507,6 +530,7 @@ paths:
         schema: { type: string, pattern: '^art_[A-Za-z0-9_-]{16,96}$' }
     get:
       operationId: getArtifact
+      summary: Get artifact metadata
       tags: [Artifacts]
       responses:
         '200':
