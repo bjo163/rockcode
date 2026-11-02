@@ -16,13 +16,21 @@ security:
   - BearerAuth: []
 tags:
   - name: Health
+    description: Process liveness and dependency/readiness probes; unauthenticated so orchestrators and the desktop host can poll them.
   - name: Capabilities
+    description: Protocol, feature, model and tool discovery scoped to the authenticated actor; never exposes credentials.
   - name: Workspaces
+    description: Control-plane workspace resources and their provisioning lifecycle.
   - name: Executors
+    description: Execution-plane workers and their effective capabilities, visible to the actor.
   - name: Sessions
+    description: Authoritative session, run, task and turn lifecycle.
   - name: Approvals
+    description: Human approval decisions for gated actions, resolved by the authenticated actor.
   - name: Questions
+    description: Answers to agent questions persisted during a run.
   - name: Artifacts
+    description: Artifact metadata and short-lived authorized access to bounded outputs.
 paths:
   /health/live:
     get:
@@ -31,6 +39,8 @@ paths:
       tags: [Health]
       security: []
       responses:
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '200':
           description: Process is alive.
           content:
@@ -44,6 +54,8 @@ paths:
       tags: [Health]
       security: []
       responses:
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '200':
           description: Service is ready.
           content:
@@ -58,6 +70,10 @@ paths:
       summary: Get server capabilities
       tags: [Capabilities]
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/CapabilityDenied'
         '200':
           description: Supported API, protocol, and feature capabilities.
           content:
@@ -72,6 +88,10 @@ paths:
       summary: List available models
       tags: [Capabilities]
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/CapabilityDenied'
         '200':
           description: Visible provider/model metadata. Never returns credentials.
           content:
@@ -92,6 +112,10 @@ paths:
       summary: List available tools
       tags: [Capabilities]
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/CapabilityDenied'
         '200':
           description: Tool catalog visible to the authenticated actor.
           content:
@@ -119,6 +143,12 @@ paths:
           name: limit
           schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '200':
           description: Authorized workspaces.
           content:
@@ -140,6 +170,14 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateWorkspace'
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/IdempotencyMismatch'
         '201':
           description: Workspace accepted or provisioned.
           content:
@@ -162,6 +200,12 @@ paths:
       summary: Get a workspace
       tags: [Workspaces]
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '200':
           description: Workspace metadata.
           content:
@@ -180,6 +224,14 @@ paths:
       parameters:
         - $ref: '#/components/parameters/IdempotencyKey'
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ConflictState'
         '202':
           description: Workspace close/release accepted.
         default:
@@ -190,6 +242,12 @@ paths:
       summary: List available executors
       tags: [Executors]
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '200':
           description: Executor summaries and effective capabilities visible to actor.
           content:
@@ -225,6 +283,12 @@ paths:
           name: limit
           schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '200':
           description: Authorized session summaries.
           content:
@@ -246,6 +310,14 @@ paths:
             schema:
               $ref: '#/components/schemas/CreateSession'
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ConflictState'
         '201':
           description: Session created.
           content:
@@ -262,6 +334,12 @@ paths:
       summary: Get a session
       tags: [Sessions]
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '200':
           description: Current durable session state.
           content:
@@ -286,6 +364,14 @@ paths:
             schema:
               $ref: '#/components/schemas/SubmitTurn'
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/SessionNotActive'
         '202':
           description: Run accepted and queued/started.
           content:
@@ -314,6 +400,14 @@ paths:
                 run_id: { type: string }
                 reason: { type: string, maxLength: 1000 }
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ConflictState'
         '202':
           description: Cancellation requested; final cancellation is reported by events.
         default:
@@ -339,6 +433,14 @@ paths:
                 run_id: { type: string }
                 text: { type: string, minLength: 1, maxLength: 20000 }
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ConflictState'
         '202':
           description: Steering input accepted.
         default:
@@ -362,6 +464,14 @@ paths:
               properties:
                 run_id: { type: string }
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ConflictState'
         '202':
           description: Recoverable run resume requested.
         default:
@@ -378,6 +488,12 @@ paths:
           name: after_seq
           schema: { type: integer, minimum: 0 }
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '200':
           description: Snapshot through a durable session event cursor.
           content:
@@ -420,6 +536,12 @@ paths:
       summary: List session tasks
       tags: [Sessions]
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '200':
           description: Parent/child task hierarchy.
           content:
@@ -442,6 +564,12 @@ paths:
       summary: Get session audit records
       tags: [Sessions]
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '200':
           description: Authorized policy and execution audit records.
           content:
@@ -482,6 +610,14 @@ paths:
                   enum: [approve_once, approve_for_session, deny]
                 justification: { type: string, maxLength: 2000 }
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/AlreadyDecided'
         '200':
           description: Approval decision persisted.
           content:
@@ -518,6 +654,14 @@ paths:
               properties:
                 answer: { type: string, minLength: 1, maxLength: 20000 }
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/NotAwaitingInput'
         '200':
           description: Answer persisted.
         default:
@@ -533,6 +677,12 @@ paths:
       summary: Get artifact metadata
       tags: [Artifacts]
       responses:
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '200':
           description: Authorized artifact metadata and short-lived download URL or bounded inline content.
           content:
@@ -584,12 +734,120 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: unauthenticated
+              message: Authentication is required to access this resource.
+              retryable: true
+              request_id: req_example_000000000000
     Forbidden:
       description: Authenticated principal lacks access.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: forbidden
+              message: The authenticated principal is not permitted to access this resource.
+              retryable: false
+              request_id: req_example_000000000000
+    CapabilityDenied:
+      description: Authenticated principal lacks the capability scope for this catalog.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: capability_denied
+              message: The required capability scope is not granted to this principal.
+              retryable: false
+              request_id: req_example_000000000000
+    NotFound:
+      description: Referenced resource does not exist or is not visible to the actor.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: not_found
+              message: The requested resource does not exist or is not visible.
+              retryable: false
+              request_id: req_example_000000000000
+    ConflictState:
+      description: Illegal state transition; the same payload may succeed once state advances.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: state_conflict
+              message: The operation conflicts with the current resource state.
+              retryable: true
+              request_id: req_example_000000000000
+    SessionNotActive:
+      description: Target session is completed or archived and cannot accept the command.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: session_not_active
+              message: The session is not active and cannot accept new input.
+              retryable: false
+              request_id: req_example_000000000000
+    AlreadyDecided:
+      description: The approval already holds a terminal decision.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: already_decided
+              message: This approval has already been decided.
+              retryable: false
+              request_id: req_example_000000000000
+    NotAwaitingInput:
+      description: The question is not currently awaiting an answer; it may succeed once the agent asks.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: not_awaiting_input
+              message: This question is not awaiting input right now.
+              retryable: true
+              request_id: req_example_000000000000
+    IdempotencyMismatch:
+      description: The Idempotency-Key was previously used with a different payload.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: idempotency_mismatch
+              message: The Idempotency-Key was reused with a different request payload.
+              retryable: false
+              request_id: req_example_000000000000
+    TooManyRequests:
+      description: Rate limit or shedding policy rejected the request; retry after the indicated window.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: rate_limited
+              message: Too many requests; retry after the rate-limit window.
+              retryable: true
+              request_id: req_example_000000000000
     ServiceUnavailable:
       description: Service is not ready.
       content:
@@ -597,6 +855,23 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
   schemas:
+    ErrorCode:
+      type: string
+      description: >
+        Stable machine-readable error code. Every 4xx response names exactly one value
+        here via its example, and the runner asserts this set equals the codes used by
+        4xx operations, so a new code cannot appear without entering this enum.
+      enum:
+        - unauthenticated
+        - forbidden
+        - capability_denied
+        - not_found
+        - state_conflict
+        - session_not_active
+        - already_decided
+        - not_awaiting_input
+        - idempotency_mismatch
+        - rate_limited
     Health:
       type: object
       required: [status, version]
@@ -812,7 +1087,8 @@ components:
           required: [code, message, retryable, request_id]
           additionalProperties: false
           properties:
-            code: { type: string }
+            code:
+              $ref: '#/components/schemas/ErrorCode'
             message: { type: string }
             retryable: { type: boolean }
             request_id: { type: string }

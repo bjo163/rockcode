@@ -1,11 +1,18 @@
 extends:
   - recommended
 
-rules:
-  # WebSocket upgrade uses HTTP 101; the successful handshake is not a 2xx response.
-  operation-2xx-response: warn
-  # Keep summaries mandatory. Each operation has an explicit summary in the source contract.
-  operation-summary: error
-  # Add 4xx responses to operations as error details are further formalized.
-  operation-4xx-response: warn
-  info-license: off
+apis:
+  openapi-v1:
+    root: contracts/openapi/v1/openapi.yaml
+    rules:
+      # Keep summaries mandatory; every operation declares an explicit summary.
+      operation-summary: error
+      # Design D1/D2: a missing 4xx is a finding, not a warning. C2 fails on any
+      # severity, so this mainly documents intent; recommended keeps it at warn.
+      operation-4xx-response: error
+      # Every tag carries a description written from the M0 spec documents.
+      tag-description: error
+      # info-license stays off for this internal contract; no SPDX licence is declared.
+      info-license: off
+  asyncapi-v1:
+    root: contracts/asyncapi/v1/session-events.yaml

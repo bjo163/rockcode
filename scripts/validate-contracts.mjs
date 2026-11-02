@@ -10,9 +10,26 @@ const redoclyVersion = "2.72.1";
 const ajvCliVersion = "5.0.0";
 const ajvFormatsVersion = "3.0.1";
 
+let passedChecks = 0;
+let failedChecks = 0;
+let failureLines = 0;
+
 function fail(message) {
   console.error("ERROR: " + message);
+  failureLines += 1;
   process.exitCode = 1;
+}
+
+// A logical check contributes exactly one PASS or FAIL, measured by whether any
+// ERROR line was printed while it ran. A check that prints many ERROR lines (for
+// example, several broken links) still counts once.
+function runCheck(fn) {
+  const before = failureLines;
+  fn();
+  const ok = failureLines === before;
+  if (ok) passedChecks += 1;
+  else failedChecks += 1;
+  return ok;
 }
 
 function npxCliCandidates() {
@@ -34,22 +51,18 @@ function resolveNpxCli() {
   return npxCliPath;
 }
 
-function runNpx(packageName, commandArgs, label) {
-  console.log("\n[contract-validation] " + label);
-
+// Runs a pinned tool through npx and returns the raw spawnSync result without
+// echoing or judging it. Transport follows D3: Windows runs npx-cli.js under
+// process.execPath (no shell); POSIX calls `npx` directly (proven by every CI run).
+function runTool(packageName, commandArgs) {
   const packages = Array.isArray(packageName) ? packageName : [packageName];
   const packageArgs = packages.flatMap((name) => ["--package", name]);
 
-  // Node >= 18.20/20.12/21.7 refuses to spawn .cmd files without a shell
-  // (CVE-2024-27980 hardening), so npx.cmd throws EINVAL on Windows. Running the
-  // same npx-cli.js under process.execPath keeps args as a literal array with no
-  // shell. POSIX keeps calling `npx` directly: that path is already proven by every
-  // CI run, and leaving it untouched avoids changing a working platform on a guess.
   let file;
   let args;
   if (process.platform === "win32") {
     const cli = resolveNpxCli();
-    if (!cli) return false;
+    if (!cli) return { error: new Error("npx-cli.js not found") };
     file = process.execPath;
     args = [cli, "--yes", ...packageArgs, ...commandArgs];
   } else {
@@ -57,7 +70,7 @@ function runNpx(packageName, commandArgs, label) {
     args = ["--yes", ...packageArgs, ...commandArgs];
   }
 
-  const result = spawnSync(file, args, {
+  return spawnSync(file, args, {
     cwd: root,
     encoding: "utf8",
     env: {
@@ -70,23 +83,70 @@ function runNpx(packageName, commandArgs, label) {
     windowsHide: true,
     maxBuffer: 64 * 1024 * 1024
   });
+}
+
+// Echoes output; a non-zero exit is a failed check. Used for tools whose verdict is
+// fully expressed by their exit code (Ajv).
+function runNpx(packageName, commandArgs, label) {
+  console.log("\n[contract-validation] " + label);
+  const result = runTool(packageName, commandArgs);
 
   if (result.stdout) process.stdout.write(result.stdout);
   if (result.stderr) process.stderr.write(result.stderr);
 
   if (result.error) {
     fail(label + ": " + result.error.message);
-    return false;
+    return;
   }
   if (result.status !== 0) {
     fail(label + ": command exited with status " + (result.status ?? "unknown"));
-    return false;
+    return;
   }
   if (result.signal) {
     fail(label + ": command was terminated by signal " + result.signal);
-    return false;
   }
-  return true;
+}
+
+// D1: any Redocly problem at any severity is a failure. The exit code is NOT the
+// signal — a warnings-only document exits 0 while still carrying findings (§1.1),
+// and that hole is exactly what this closes. We still fail when the exit code is
+// non-zero with no findings (P1), so a fatal error is never mistaken for a pass.
+function lintSpec(packageName, specPath, label) {
+  console.log("\n[contract-validation] " + label);
+  const result = runTool(packageName, ["redocly", "lint", specPath, "--format", "json"]);
+
+  if (result.error) {
+    fail(label + ": " + result.error.message);
+    return;
+  }
+
+  let report;
+  try {
+    report = JSON.parse(result.stdout);
+  } catch {
+    const raw = (result.stdout || result.stderr || "").split("\n").slice(0, 20).join("\n");
+    fail(label + ": --format json output could not be parsed. First lines:\n" + raw);
+    return;
+  }
+
+  const problems = Object.values(report.problems || {}).flat();
+  if (problems.length > 0) {
+    for (const problem of problems) {
+      const firstLocation = Array.isArray(problem.location) ? problem.location[0] : undefined;
+      const where = firstLocation?.source?.ref
+        ? firstLocation.source.ref + ":" + (firstLocation.start?.line ?? "?")
+        : specPath;
+      fail(label + ": [" + problem.severity + "] " + problem.ruleId + " at " + where + " — " + problem.message);
+    }
+    return;
+  }
+
+  if (result.status !== 0 || result.signal) {
+    fail(label + ": no findings reported but lint exited " + (result.status ?? "signal " + result.signal));
+    return;
+  }
+
+  console.log("No findings.");
 }
 
 function walk(directory, output = []) {
@@ -184,42 +244,53 @@ function main() {
     if (!existsSync(path.join(root, file))) fail("Missing API contract: " + file);
   }
 
-  validateMarkdownLinks();
-  const fixtures = validateFixtureInventory();
-
   const redocly = "@redocly/cli@" + redoclyVersion;
   const ajv = ["ajv-cli@" + ajvCliVersion, "ajv-formats@" + ajvFormatsVersion];
   const ajvLabel = ajv.join(" + ");
 
-  runNpx(redocly, ["redocly", "lint", openapi], "OpenAPI lint (" + redocly + ")");
-  runNpx(redocly, ["redocly", "lint", asyncapi], "AsyncAPI lint (" + redocly + ")");
+  runCheck(validateMarkdownLinks);
+  let fixtures = [];
+  runCheck(() => {
+    fixtures = validateFixtureInventory();
+  });
+
+  runCheck(() => lintSpec(redocly, openapi, "OpenAPI lint (" + redocly + ")"));
+  runCheck(() => lintSpec(redocly, asyncapi, "AsyncAPI lint (" + redocly + ")"));
 
   for (const fixture of fixtures) {
     const schemaPath = path.relative(root, fixture.schema).split(path.sep).join("/");
     const validPath = path.relative(root, fixture.valid).split(path.sep).join("/");
     const invalidPath = path.relative(root, fixture.invalid).split(path.sep).join("/");
 
-    runNpx(
-      ajv,
-      ["ajv", "compile", "--spec=draft2020", "-c", "ajv-formats", "-s", schemaPath],
-      "Compile " + fixture.stem + " schema (" + ajvLabel + ")"
+    runCheck(() =>
+      runNpx(
+        ajv,
+        ["ajv", "compile", "--spec=draft2020", "-c", "ajv-formats", "-s", schemaPath],
+        "Compile " + fixture.stem + " schema (" + ajvLabel + ")"
+      )
     );
-    runNpx(
-      ajv,
-      ["ajv", "test", "--spec=draft2020", "-c", "ajv-formats", "-s", schemaPath, "-d", validPath, "--valid"],
-      "Accept valid " + fixture.stem + " fixture (" + ajvLabel + ")"
+    runCheck(() =>
+      runNpx(
+        ajv,
+        ["ajv", "test", "--spec=draft2020", "-c", "ajv-formats", "-s", schemaPath, "-d", validPath, "--valid"],
+        "Accept valid " + fixture.stem + " fixture (" + ajvLabel + ")"
+      )
     );
-    runNpx(
-      ajv,
-      ["ajv", "test", "--spec=draft2020", "-c", "ajv-formats", "-s", schemaPath, "-d", invalidPath, "--invalid"],
-      "Reject invalid " + fixture.stem + " fixture (" + ajvLabel + ")"
+    runCheck(() =>
+      runNpx(
+        ajv,
+        ["ajv", "test", "--spec=draft2020", "-c", "ajv-formats", "-s", schemaPath, "-d", invalidPath, "--invalid"],
+        "Reject invalid " + fixture.stem + " fixture (" + ajvLabel + ")"
+      )
     );
   }
 
-  if (process.exitCode === 1) {
+  console.log("\n[contract-validation] PASS " + passedChecks + " / FAIL " + failedChecks);
+
+  if (failedChecks > 0 || process.exitCode === 1) {
     console.error("\nContract validation failed. Fix the source contract or fixture; do not weaken checks without documenting why.");
   } else {
-    console.log("\nAll contract validation checks passed.");
+    console.log("All contract validation checks passed.");
   }
 }
 
