@@ -47,7 +47,7 @@ channels:
 operations:
   serverSendsEvent:
     security:
-      - rockcodeBearer: []
+      - $ref: '#/components/securitySchemes/rockcodeBearer'
     action: send
     channel:
       $ref: '#/channels/sessionEvents'
@@ -56,7 +56,7 @@ operations:
       - $ref: '#/channels/sessionEvents/messages/eventFrame'
   serverSendsHello:
     security:
-      - rockcodeBearer: []
+      - $ref: '#/components/securitySchemes/rockcodeBearer'
     action: send
     channel:
       $ref: '#/channels/sessionEvents'
@@ -65,7 +65,7 @@ operations:
       - $ref: '#/channels/sessionEvents/messages/helloFrame'
   serverSendsResync:
     security:
-      - rockcodeBearer: []
+      - $ref: '#/components/securitySchemes/rockcodeBearer'
     action: send
     channel:
       $ref: '#/channels/sessionEvents'
@@ -74,7 +74,7 @@ operations:
       - $ref: '#/channels/sessionEvents/messages/resyncFrame'
   serverSendsHeartbeat:
     security:
-      - rockcodeBearer: []
+      - $ref: '#/components/securitySchemes/rockcodeBearer'
     action: send
     channel:
       $ref: '#/channels/sessionEvents'
@@ -82,7 +82,7 @@ operations:
       - $ref: '#/channels/sessionEvents/messages/heartbeatFrame'
   serverSendsCommandResult:
     security:
-      - rockcodeBearer: []
+      - $ref: '#/components/securitySchemes/rockcodeBearer'
     action: send
     channel:
       $ref: '#/channels/sessionEvents'
@@ -90,7 +90,7 @@ operations:
       - $ref: '#/channels/sessionEvents/messages/commandResultFrame'
   clientSendsAck:
     security:
-      - rockcodeBearer: []
+      - $ref: '#/components/securitySchemes/rockcodeBearer'
     action: receive
     channel:
       $ref: '#/channels/sessionEvents'
@@ -98,7 +98,7 @@ operations:
       - $ref: '#/channels/sessionEvents/messages/ackFrame'
   clientSendsApprovalReply:
     security:
-      - rockcodeBearer: []
+      - $ref: '#/components/securitySchemes/rockcodeBearer'
     action: receive
     channel:
       $ref: '#/channels/sessionEvents'
@@ -106,7 +106,7 @@ operations:
       - $ref: '#/channels/sessionEvents/messages/approvalReplyFrame'
   clientSendsQuestionReply:
     security:
-      - rockcodeBearer: []
+      - $ref: '#/components/securitySchemes/rockcodeBearer'
     action: receive
     channel:
       $ref: '#/channels/sessionEvents'
@@ -114,7 +114,7 @@ operations:
       - $ref: '#/channels/sessionEvents/messages/questionReplyFrame'
   clientSendsPong:
     security:
-      - rockcodeBearer: []
+      - $ref: '#/components/securitySchemes/rockcodeBearer'
     action: receive
     channel:
       $ref: '#/channels/sessionEvents'
