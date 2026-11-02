@@ -1,0 +1,238 @@
+asyncapi: 3.0.0
+info:
+  title: RockCode Session Event Stream
+  version: 1.0.0
+  summary: Bidirectional WebSocket contract for a single RockCode session.
+  description: >
+    Server event frames carry durable aggregate events. Control frames manage
+    replay/resync and connection lifecycle. Client frames acknowledge applied
+    event cursors and reply to persisted approval/question requests.
+defaultContentType: application/json
+servers:
+  local:
+    host: 127.0.0.1:43170
+    pathname: /v1
+    protocol: ws
+    description: Local loopback example; actual port and credentials are negotiated by the desktop host.
+  remote:
+    host: agent.example.invalid
+    pathname: /v1
+    protocol: wss
+    description: Remote deployment; TLS is mandatory.
+channels:
+  sessionEvents:
+    address: /sessions/{session_id}/events
+    description: One authorized session event stream. Cursor is a query parameter.
+    parameters:
+      session_id:
+        description: Opaque session identifier.
+        schema:
+          type: string
+          pattern: '^ses_[A-Za-z0-9_-]{16,96}$'
+    messages:
+      eventFrame:
+        $ref: '#/components/messages/EventFrame'
+      helloFrame:
+        $ref: '#/components/messages/HelloFrame'
+      resyncFrame:
+        $ref: '#/components/messages/ResyncFrame'
+      heartbeatFrame:
+        $ref: '#/components/messages/HeartbeatFrame'
+      commandResultFrame:
+        $ref: '#/components/messages/CommandResultFrame'
+      ackFrame:
+        $ref: '#/components/messages/AckFrame'
+      approvalReplyFrame:
+        $ref: '#/components/messages/ApprovalReplyFrame'
+      questionReplyFrame:
+        $ref: '#/components/messages/QuestionReplyFrame'
+      pongFrame:
+        $ref: '#/components/messages/PongFrame'
+operations:
+  serverSendsEvent:
+    action: send
+    channel:
+      $ref: '#/channels/sessionEvents'
+    summary: Server sends a durable session event.
+    messages:
+      - $ref: '#/channels/sessionEvents/messages/eventFrame'
+  serverSendsHello:
+    action: send
+    channel:
+      $ref: '#/channels/sessionEvents'
+    summary: Server sends the connection/replay handshake.
+    messages:
+      - $ref: '#/channels/sessionEvents/messages/helloFrame'
+  serverSendsResync:
+    action: send
+    channel:
+      $ref: '#/channels/sessionEvents'
+    summary: Server requests snapshot hydration because the cursor cannot be replayed.
+    messages:
+      - $ref: '#/channels/sessionEvents/messages/resyncFrame'
+  serverSendsHeartbeat:
+    action: send
+    channel:
+      $ref: '#/channels/sessionEvents'
+    messages:
+      - $ref: '#/channels/sessionEvents/messages/heartbeatFrame'
+  serverSendsCommandResult:
+    action: send
+    channel:
+      $ref: '#/channels/sessionEvents'
+    messages:
+      - $ref: '#/channels/sessionEvents/messages/commandResultFrame'
+  clientSendsAck:
+    action: receive
+    channel:
+      $ref: '#/channels/sessionEvents'
+    messages:
+      - $ref: '#/channels/sessionEvents/messages/ackFrame'
+  clientSendsApprovalReply:
+    action: receive
+    channel:
+      $ref: '#/channels/sessionEvents'
+    messages:
+      - $ref: '#/channels/sessionEvents/messages/approvalReplyFrame'
+  clientSendsQuestionReply:
+    action: receive
+    channel:
+      $ref: '#/channels/sessionEvents'
+    messages:
+      - $ref: '#/channels/sessionEvents/messages/questionReplyFrame'
+  clientSendsPong:
+    action: receive
+    channel:
+      $ref: '#/channels/sessionEvents'
+    messages:
+      - $ref: '#/channels/sessionEvents/messages/pongFrame'
+components:
+  messages:
+    EventFrame:
+      name: SessionEventFrame
+      title: Durable session event
+      contentType: application/json
+      payload:
+        type: object
+        additionalProperties: false
+        required: [kind, event]
+        properties:
+          kind:
+            type: string
+            const: event
+          event:
+            $ref: '../json-schema/v1/event-envelope.schema.json'
+    HelloFrame:
+      name: HelloFrame
+      contentType: application/json
+      payload:
+        type: object
+        additionalProperties: false
+        required: [kind, protocol_version, server_instance_id, aggregate_id, current_seq, replay]
+        properties:
+          kind: { type: string, const: hello }
+          protocol_version: { type: string }
+          server_instance_id: { type: string }
+          aggregate_id: { type: string }
+          current_seq: { type: integer, minimum: 0 }
+          replay:
+            type: object
+            additionalProperties: false
+            required: [available, from_seq]
+            properties:
+              available: { type: boolean }
+              from_seq: { type: integer, minimum: 0 }
+              to_seq: { type: integer, minimum: 0 }
+    ResyncFrame:
+      name: ResyncFrame
+      contentType: application/json
+      payload:
+        type: object
+        additionalProperties: false
+        required: [kind, current_seq, reason]
+        properties:
+          kind: { type: string, const: resync }
+          current_seq: { type: integer, minimum: 0 }
+          reason:
+            type: string
+            enum: [cursor_expired, instance_changed, sequence_gap, snapshot_required]
+    HeartbeatFrame:
+      name: HeartbeatFrame
+      contentType: application/json
+      payload:
+        type: object
+        additionalProperties: false
+        required: [kind, server_time, last_seq]
+        properties:
+          kind: { type: string, const: heartbeat }
+          server_time: { type: string, format: date-time }
+          last_seq: { type: integer, minimum: 0 }
+    CommandResultFrame:
+      name: CommandResultFrame
+      contentType: application/json
+      payload:
+        type: object
+        additionalProperties: false
+        required: [kind, request_id, ok]
+        properties:
+          kind: { type: string, const: command.result }
+          request_id: { type: string }
+          ok: { type: boolean }
+          error:
+            type: object
+            additionalProperties: false
+            required: [code, message]
+            properties:
+              code: { type: string }
+              message: { type: string }
+    AckFrame:
+      name: AckFrame
+      contentType: application/json
+      payload:
+        type: object
+        additionalProperties: false
+        required: [kind, seq]
+        properties:
+          kind: { type: string, const: ack }
+          seq: { type: integer, minimum: 0 }
+    ApprovalReplyFrame:
+      name: ApprovalReplyFrame
+      contentType: application/json
+      payload:
+        type: object
+        additionalProperties: false
+        required: [kind, request_id, approval_id, decision]
+        properties:
+          kind: { type: string, const: approval.reply }
+          request_id: { type: string }
+          approval_id:
+            type: string
+            pattern: '^apr_[A-Za-z0-9_-]{16,96}$'
+          decision:
+            type: string
+            enum: [approve_once, approve_for_session, deny]
+          justification: { type: string, maxLength: 2000 }
+    QuestionReplyFrame:
+      name: QuestionReplyFrame
+      contentType: application/json
+      payload:
+        type: object
+        additionalProperties: false
+        required: [kind, request_id, question_id, answer]
+        properties:
+          kind: { type: string, const: question.reply }
+          request_id: { type: string }
+          question_id:
+            type: string
+            pattern: '^qst_[A-Za-z0-9_-]{16,96}$'
+          answer: { type: string, minLength: 1, maxLength: 20000 }
+    PongFrame:
+      name: PongFrame
+      contentType: application/json
+      payload:
+        type: object
+        additionalProperties: false
+        required: [kind, client_time]
+        properties:
+          kind: { type: string, const: pong }
+          client_time: { type: string, format: date-time }
