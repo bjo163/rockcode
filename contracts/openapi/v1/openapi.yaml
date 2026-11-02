@@ -1,0 +1,795 @@
+openapi: 3.1.0
+info:
+  title: RockCode Agent API
+  version: 1.0.0
+  summary: Shared API for RockCode Desktop, Web, CLI, and remote workers.
+  description: >
+    The server is authoritative for agent/session/executor state. HTTP is used for
+    resources and idempotent commands. Live session transport is WebSocket and is
+    described in the companion AsyncAPI contract.
+servers:
+  - url: http://127.0.0.1:43170/v1
+    description: Local development/desktop loopback example; runtime port is negotiated by the desktop host.
+  - url: https://agent.example.invalid/v1
+    description: Remote deployment placeholder; production must use TLS.
+security:
+  - BearerAuth: []
+tags:
+  - name: Health
+  - name: Capabilities
+  - name: Workspaces
+  - name: Executors
+  - name: Sessions
+  - name: Approvals
+  - name: Questions
+  - name: Artifacts
+paths:
+  /health/live:
+    get:
+      operationId: getLiveness
+      tags: [Health]
+      security: []
+      responses:
+        '200':
+          description: Process is alive.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /health/ready:
+    get:
+      operationId: getReadiness
+      tags: [Health]
+      security: []
+      responses:
+        '200':
+          description: Service is ready.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Readiness'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /capabilities:
+    get:
+      operationId: getCapabilities
+      tags: [Capabilities]
+      responses:
+        '200':
+          description: Supported API, protocol, and feature capabilities.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Capabilities'
+        default:
+          $ref: '#/components/responses/Error'
+  /models:
+    get:
+      operationId: listModels
+      tags: [Capabilities]
+      responses:
+        '200':
+          description: Visible provider/model metadata. Never returns credentials.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModelSummary'
+        default:
+          $ref: '#/components/responses/Error'
+  /tools:
+    get:
+      operationId: listTools
+      tags: [Capabilities]
+      responses:
+        '200':
+          description: Tool catalog visible to the authenticated actor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ToolSummary'
+        default:
+          $ref: '#/components/responses/Error'
+  /workspaces:
+    get:
+      operationId: listWorkspaces
+      tags: [Workspaces]
+      parameters:
+        - in: query
+          name: cursor
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        '200':
+          description: Authorized workspaces.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceList'
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      operationId: createWorkspace
+      tags: [Workspaces]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspace'
+      responses:
+        '201':
+          description: Workspace accepted or provisioned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '202':
+          description: Workspace provisioning has started.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        default:
+          $ref: '#/components/responses/Error'
+  /workspaces/{workspace_id}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    get:
+      operationId: getWorkspace
+      tags: [Workspaces]
+      responses:
+        '200':
+          description: Workspace metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        default:
+          $ref: '#/components/responses/Error'
+  /workspaces/{workspace_id}/close:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      operationId: closeWorkspace
+      tags: [Workspaces]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '202':
+          description: Workspace close/release accepted.
+        default:
+          $ref: '#/components/responses/Error'
+  /executors:
+    get:
+      operationId: listExecutors
+      tags: [Executors]
+      responses:
+        '200':
+          description: Executor summaries and effective capabilities visible to actor.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ExecutorSummary'
+        default:
+          $ref: '#/components/responses/Error'
+  /sessions:
+    get:
+      operationId: listSessions
+      tags: [Sessions]
+      parameters:
+        - in: query
+          name: workspace_id
+          schema: { type: string }
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [created, idle, running, waiting_approval, waiting_input, waiting_child, queued, disconnected, recovering, completed, failed, cancelled, archived]
+        - in: query
+          name: cursor
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        '200':
+          description: Authorized session summaries.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionList'
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      operationId: createSession
+      tags: [Sessions]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSession'
+      responses:
+        '201':
+          description: Session created.
+          content:
+            application/json:
+              schema:
+                $ref: '../../json-schema/v1/session.schema.json'
+        default:
+          $ref: '#/components/responses/Error'
+  /sessions/{session_id}:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      operationId: getSession
+      tags: [Sessions]
+      responses:
+        '200':
+          description: Current durable session state.
+          content:
+            application/json:
+              schema:
+                $ref: '../../json-schema/v1/session.schema.json'
+        default:
+          $ref: '#/components/responses/Error'
+  /sessions/{session_id}/turns:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    post:
+      operationId: submitTurn
+      tags: [Sessions]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitTurn'
+      responses:
+        '202':
+          description: Run accepted and queued/started.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunReceipt'
+        default:
+          $ref: '#/components/responses/Error'
+  /sessions/{session_id}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    post:
+      operationId: cancelRun
+      tags: [Sessions]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                run_id: { type: string }
+                reason: { type: string, maxLength: 1000 }
+      responses:
+        '202':
+          description: Cancellation requested; final cancellation is reported by events.
+        default:
+          $ref: '#/components/responses/Error'
+  /sessions/{session_id}/steer:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    post:
+      operationId: steerRun
+      tags: [Sessions]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              additionalProperties: false
+              properties:
+                run_id: { type: string }
+                text: { type: string, minLength: 1, maxLength: 20000 }
+      responses:
+        '202':
+          description: Steering input accepted.
+        default:
+          $ref: '#/components/responses/Error'
+  /sessions/{session_id}/resume:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    post:
+      operationId: resumeSession
+      tags: [Sessions]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                run_id: { type: string }
+      responses:
+        '202':
+          description: Recoverable run resume requested.
+        default:
+          $ref: '#/components/responses/Error'
+  /sessions/{session_id}/snapshot:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      operationId: getSessionSnapshot
+      tags: [Sessions]
+      parameters:
+        - in: query
+          name: after_seq
+          schema: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: Snapshot through a durable session event cursor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionSnapshot'
+        default:
+          $ref: '#/components/responses/Error'
+  /sessions/{session_id}/events:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      operationId: connectSessionEvents
+      tags: [Sessions]
+      description: WebSocket upgrade endpoint. See contracts/asyncapi/v1/session-events.yaml.
+      x-websocket:
+        asyncapi: ../../asyncapi/v1/session-events.yaml
+        channel: /v1/sessions/{session_id}/events
+        cursor_query_parameter: cursor
+      parameters:
+        - in: query
+          name: cursor
+          required: false
+          schema: { type: integer, minimum: 0 }
+      responses:
+        '101':
+          description: WebSocket protocol upgraded; server sends event/control frames and accepts ack/approval/question replies.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        default:
+          $ref: '#/components/responses/Error'
+  /sessions/{session_id}/tasks:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      operationId: listSessionTasks
+      tags: [Sessions]
+      responses:
+        '200':
+          description: Parent/child task hierarchy.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaskSummary'
+        default:
+          $ref: '#/components/responses/Error'
+  /sessions/{session_id}/audit:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      operationId: getSessionAudit
+      tags: [Sessions]
+      responses:
+        '200':
+          description: Authorized policy and execution audit records.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+        default:
+          $ref: '#/components/responses/Error'
+  /approvals/{approval_id}/decision:
+    parameters:
+      - name: approval_id
+        in: path
+        required: true
+        schema: { type: string, pattern: '^apr_[A-Za-z0-9_-]{16,96}$' }
+    post:
+      operationId: decideApproval
+      tags: [Approvals]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              additionalProperties: false
+              properties:
+                decision:
+                  type: string
+                  enum: [approve_once, approve_for_session, deny]
+                justification: { type: string, maxLength: 2000 }
+      responses:
+        '200':
+          description: Approval decision persisted.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [approval_id, status, decided_at]
+                properties:
+                  approval_id: { type: string }
+                  status: { type: string, enum: [approved, denied, expired, revoked, cancelled] }
+                  decided_at: { type: string, format: date-time }
+        default:
+          $ref: '#/components/responses/Error'
+  /questions/{question_id}/answer:
+    parameters:
+      - name: question_id
+        in: path
+        required: true
+        schema: { type: string, pattern: '^qst_[A-Za-z0-9_-]{16,96}$' }
+    post:
+      operationId: answerQuestion
+      tags: [Questions]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [answer]
+              additionalProperties: false
+              properties:
+                answer: { type: string, minLength: 1, maxLength: 20000 }
+      responses:
+        '200':
+          description: Answer persisted.
+        default:
+          $ref: '#/components/responses/Error'
+  /artifacts/{artifact_id}:
+    parameters:
+      - name: artifact_id
+        in: path
+        required: true
+        schema: { type: string, pattern: '^art_[A-Za-z0-9_-]{16,96}$' }
+    get:
+      operationId: getArtifact
+      tags: [Artifacts]
+      responses:
+        '200':
+          description: Authorized artifact metadata and short-lived download URL or bounded inline content.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artifact'
+        default:
+          $ref: '#/components/responses/Error'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque scoped token
+  parameters:
+    IdempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: true
+      description: Repeated key with identical payload returns the original outcome; different payload is rejected.
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+    SessionId:
+      in: path
+      name: session_id
+      required: true
+      schema:
+        type: string
+        pattern: '^ses_[A-Za-z0-9_-]{16,96}$'
+    WorkspaceId:
+      in: path
+      name: workspace_id
+      required: true
+      schema:
+        type: string
+        pattern: '^wsp_[A-Za-z0-9_-]{16,96}$'
+  responses:
+    Error:
+      description: Structured API error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Missing or invalid credentials.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Authenticated principal lacks access.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ServiceUnavailable:
+      description: Service is not ready.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    Health:
+      type: object
+      required: [status, version]
+      additionalProperties: false
+      properties:
+        status: { type: string, const: live }
+        version: { type: string }
+    Readiness:
+      type: object
+      required: [status, checks]
+      additionalProperties: false
+      properties:
+        status: { type: string, enum: [ready, degraded, not_ready] }
+        checks:
+          type: array
+          items:
+            type: object
+            required: [name, status]
+            properties:
+              name: { type: string }
+              status: { type: string, enum: [ok, degraded, failed] }
+              detail: { type: string }
+    Capabilities:
+      type: object
+      required: [server_version, protocol_versions, event_schema_versions, features, executors]
+      additionalProperties: false
+      properties:
+        server_version: { type: string }
+        minimum_client_version: { type: string }
+        protocol_versions:
+          type: array
+          items: { type: string }
+        event_schema_versions:
+          type: array
+          items: { type: integer, minimum: 1 }
+        features:
+          type: array
+          items: { type: string }
+        executors:
+          type: array
+          items:
+            type: object
+            required: [kind, available]
+            properties:
+              kind: { type: string, enum: [local, container, remote] }
+              available: { type: boolean }
+              limitations:
+                type: array
+                items: { type: string }
+    ModelSummary:
+      type: object
+      required: [provider_id, model_id, display_name, capabilities]
+      additionalProperties: false
+      properties:
+        provider_id: { type: string }
+        model_id: { type: string }
+        display_name: { type: string }
+        capabilities:
+          type: array
+          items: { type: string }
+        context_window: { type: integer, minimum: 1 }
+        requires_auth: { type: boolean }
+    ToolSummary:
+      type: object
+      required: [tool_id, version, description, risk_class, required_capabilities]
+      additionalProperties: false
+      properties:
+        tool_id: { type: string }
+        version: { type: string }
+        description: { type: string }
+        risk_class: { type: string, enum: [low, medium, high, critical] }
+        required_capabilities:
+          type: array
+          items: { type: string }
+    CreateWorkspace:
+      type: object
+      required: [display_name, executor_kind, sandbox_profile]
+      additionalProperties: false
+      properties:
+        display_name: { type: string, minLength: 1, maxLength: 160 }
+        repository_uri: { type: string, maxLength: 2048 }
+        executor_kind: { type: string, enum: [local, container, remote] }
+        executor_id: { type: string }
+        sandbox_profile: { type: string }
+        requested_capabilities:
+          type: array
+          items: { type: string }
+    Workspace:
+      type: object
+      required: [workspace_id, display_name, status, executor_kind, sandbox_profile, created_at]
+      additionalProperties: false
+      properties:
+        workspace_id: { type: string }
+        display_name: { type: string }
+        status: { type: string, enum: [created, provisioning, ready, busy, suspended, disconnected, closing, closed, failed, lost] }
+        executor_kind: { type: string, enum: [local, container, remote] }
+        executor_id: { type: string }
+        sandbox_profile: { type: string }
+        created_at: { type: string, format: date-time }
+    WorkspaceList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Workspace' }
+        next_cursor: { type: string }
+    CreateSession:
+      type: object
+      required: [workspace_id]
+      additionalProperties: false
+      properties:
+        workspace_id: { type: string }
+        title: { type: string, maxLength: 240 }
+        agent_profile_id: { type: string }
+        model:
+          type: object
+          required: [provider_id, model_id]
+          properties:
+            provider_id: { type: string }
+            model_id: { type: string }
+    SessionList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '../../json-schema/v1/session.schema.json'
+        next_cursor: { type: string }
+    SubmitTurn:
+      type: object
+      required: [content]
+      additionalProperties: false
+      properties:
+        content:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [type]
+            properties:
+              type: { type: string, enum: [text, image_ref, file_ref] }
+              text: { type: string }
+              artifact_id: { type: string }
+              media_type: { type: string }
+        mode: { type: string, enum: [build, plan, review] }
+        client_message_id: { type: string }
+    RunReceipt:
+      type: object
+      required: [run_id, session_id, status, accepted_at]
+      additionalProperties: false
+      properties:
+        run_id: { type: string }
+        session_id: { type: string }
+        status: { type: string, enum: [queued, starting, running] }
+        accepted_at: { type: string, format: date-time }
+    SessionSnapshot:
+      type: object
+      required: [session, snapshot_seq, events]
+      additionalProperties: false
+      properties:
+        session:
+          $ref: '../../json-schema/v1/session.schema.json'
+        snapshot_seq: { type: integer, minimum: 0 }
+        events:
+          type: array
+          items:
+            $ref: '../../json-schema/v1/event-envelope.schema.json'
+    ExecutorSummary:
+      type: object
+      required: [executor_id, kind, status, capabilities]
+      additionalProperties: false
+      properties:
+        executor_id: { type: string }
+        kind: { type: string, enum: [local, container, remote] }
+        status: { type: string, enum: [registered, connecting, healthy, degraded, draining, disconnected, revoked] }
+        capabilities:
+          type: array
+          items: { type: string }
+        sandbox_profiles:
+          type: array
+          items: { type: string }
+    TaskSummary:
+      type: object
+      required: [task_id, status, title]
+      additionalProperties: false
+      properties:
+        task_id: { type: string }
+        parent_task_id: { type: string }
+        title: { type: string }
+        status: { type: string, enum: [queued, blocked, running, completed, failed, cancelled, lost] }
+        assigned_agent_id: { type: string }
+    Artifact:
+      type: object
+      required: [artifact_id, kind, media_type, sha256, byte_length, created_at]
+      additionalProperties: false
+      properties:
+        artifact_id: { type: string }
+        kind: { type: string }
+        media_type: { type: string }
+        sha256: { type: string, pattern: '^[a-f0-9]{64}$' }
+        byte_length: { type: integer, minimum: 0 }
+        created_at: { type: string, format: date-time }
+        download_url: { type: string, format: uri, description: Short-lived authorized URL; may be omitted for inline/local mode. }
+    ErrorResponse:
+      type: object
+      required: [error]
+      additionalProperties: false
+      properties:
+        error:
+          type: object
+          required: [code, message, retryable, request_id]
+          additionalProperties: false
+          properties:
+            code: { type: string }
+            message: { type: string }
+            retryable: { type: boolean }
+            request_id: { type: string }
+            details: { type: object }
