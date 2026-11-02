@@ -72,7 +72,7 @@ A contradiction must be fixed at the owning source and linked documents updated 
 | Platform support strategy | This package |
 | Moonframe consumption boundary | This package |
 | POC and M1 exit criteria | This package |
-| Source implementation | **Not started** |
+| Contract validation tooling | Added; first CI run pending |\n| Product runtime/UI source implementation | **Not started** |
 
 ## Change control
 
