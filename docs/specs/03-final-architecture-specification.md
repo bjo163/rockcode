@@ -911,3 +911,52 @@ The architecture is informed by the following upstream implementations. These ar
 ---
 
 **Implementation warning:** This document defines the target architecture and acceptance criteria. It does not certify upstream code, guarantee a Windows sandbox implementation, or authorize production deployment before the relevant tests and security reviews pass.
+
+---
+
+## 19. UI design system and package architecture amendment
+
+This amendment is normative and extends the initial repository structure and frontend technology decisions above.
+
+### 19.1 Canonical design-system dependency
+
+RockCode consumes the existing [bjo163/moonframe](https://github.com/bjo163/moonframe) repository and its `@moonwitness/moonframe` React library. The audited source baseline is `0e395f21edef0f01c42caeea34840bdcb71eeabf`; the root package manifest identifies version `0.1.1`. npm publication is not assumed. Until a registry release is independently verified, use an exact immutable Git source pin and a clean consumer-build test.
+
+Moonframe owns shared tokens, theme resolution, skins, base component semantics, shared accessibility and common UI primitives. RockCode must not fork these into a duplicate token or theme system.
+
+### 19.2 Product art direction
+
+RockCode's product visual direction is **Industrial Grunge × Manga Linework × Funky Gen-Z × Neo-Brutalist Engineering**. Default skin: Moonframe `moonpunk`; default appearance: Dark. `mooncrash`, `moonledger`, and `classic` remain complete alternative skins. Do not create a sixteenth skin or blend Moonframe skin recipes. Original RockCode industrial/manga assets must be decorative, rights-reviewed and subordinate to functional content.
+
+### 19.3 Frontend package amendment
+
+Add the following logical workspace packages to the initial repository map:
+
+- `packages/ui` — `@rockcode/ui`: RockCode application shell, brand integration, navigation, status and composition wrappers over Moonframe.
+- `packages/agent-ui` — `@rockcode/agent-ui`: session timeline, agent/tool/approval/task/model/context components.
+- `packages/workbench` — `@rockcode/workbench`: pane registry, docking, tabs, workspace layouts and layout persistence adapter.
+- `packages/editor` — `@rockcode/editor`: optional editor adapter, lazy-loaded.
+- `packages/terminal` — `@rockcode/terminal`: terminal host adapter bound to backend PTY IDs, lazy-loaded.
+- `packages/brand-assets` — `@rockcode/brand-assets`: original RockCode marks, industrial/manga linework, patterns and asset manifests.
+- `packages/ui-testkit` — `@rockcode/ui-testkit`: internal test fixtures and accessibility helpers.
+
+These are logical boundaries, not a mandate to split every package on day one. The editor, terminal, asset and testkit boundaries may begin as private modules when that reduces initial complexity. Use pnpm workspaces for the shared React/TypeScript frontend package graph.
+
+### 19.4 Dependency rules
+
+1. Desktop and Web must consume the same UI packages and typed view-model contracts.
+2. Base components come from Moonframe; RockCode packages provide product semantics and composition only.
+3. UI packages cannot evaluate permissions, execute tools, access provider secrets, choose executors or implement agent lifecycle.
+4. UI receives typed view models and callbacks from the app/client SDK layer.
+5. Editor/terminal/browser are optional, lazy-loaded adapters; core UI must render without them.
+6. Do not duplicate Moonframe CSS or import global styles from multiple packages.
+7. Backend state and protocol event contracts remain authoritative; UI reducers are read models only.
+8. Theme and accessibility preferences are independent from workspace/server policy.
+
+### 19.5 Canonical UI specifications
+
+The detailed contracts are maintained in:
+- `docs/specs/04-ui-design-system.md`
+- `docs/specs/05-ui-package-architecture.md`
+
+If a package boundary, visual design or UI behavior decision is updated, update those documents and this architecture amendment together.
