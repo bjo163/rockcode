@@ -960,3 +960,26 @@ The detailed contracts are maintained in:
 - `docs/specs/05-ui-package-architecture.md`
 
 If a package boundary, visual design or UI behavior decision is updated, update those documents and this architecture amendment together.
+
+---
+
+## 20. M0 Architecture & Contract Baseline
+
+The detailed M0 contract package is normative for implementation planning and is indexed at [docs/specs/m0/README.md](m0/README.md).
+
+It defines:
+- system context, control-plane/execution-plane separation and deployment trust boundaries;
+- Rust crate ownership, minimal initial crate split and forbidden dependency edges;
+- REST, WebSocket, AsyncAPI, idempotency, event replay and error contracts;
+- domain entities, state lifecycle and aggregate/event invariants;
+- threat register, capability grants, sandbox profiles, Windows isolation and secret boundaries;
+- operating-system/browser support tiers;
+- Moonframe dependency pin and consumer smoke requirements;
+- validation experiments and M1 entry gates.
+
+Machine-readable sources are under:
+- `contracts/openapi/v1/openapi.yaml`
+- `contracts/asyncapi/v1/session-events.yaml`
+- `contracts/json-schema/v1/`
+
+M0 documents and schemas are authored, but M0 is not considered fully validated until schema/API validators, cross-document consistency checks and the required proof-of-concept gates have recorded evidence. This amendment does not authorize or claim source implementation.
