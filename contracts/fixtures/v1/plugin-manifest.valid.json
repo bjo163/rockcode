@@ -1,0 +1,19 @@
+{
+  "id": "rockcode.sample-plugin",
+  "name": "Sample Plugin",
+  "version": "1.0.0",
+  "api_version": "1",
+  "wit_version": "0.2.0",
+  "entrypoint": "component.wasm",
+  "digest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "publisher": "RockCode Example",
+  "capabilities_requested": [],
+  "hooks_subscribed": [
+    "before_tool"
+  ],
+  "minimum_host_version": "0.1.0",
+  "permissions_description": "No permissions requested.",
+  "license": "MIT",
+  "source": "https://github.com/bjo163/rockcode",
+  "release_channel": "experimental"
+}
