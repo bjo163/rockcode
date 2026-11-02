@@ -1,0 +1,14 @@
+{
+  "event_id": "evt_0123456789abcdef",
+  "aggregate_type": "session",
+  "aggregate_id": "ses_0123456789abcdef",
+  "seq": 1,
+  "schema_version": 1,
+  "type": "session.created",
+  "occurred_at": "2026-11-02T10:00:00Z",
+  "correlation_id": "corr_0123456789abcdef",
+  "causation_id": null,
+  "payload": {
+    "title": "First session"
+  }
+}
