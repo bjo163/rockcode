@@ -1,9 +1,0 @@
-extends:
-  - recommended
-
-rules:
-  # WebSocket upgrades document 101 as a successful handshake.
-  operation-2xx-response: warn
-  no-unresolved-refs: error
-  # License metadata is added before public API release.
-  info-license: off
