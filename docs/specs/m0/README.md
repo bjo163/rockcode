@@ -19,7 +19,8 @@ M0 does not create application source code, build scripts, Cargo crates, databas
 5. [Threat Model & Capability Security](05-threat-model-and-capability-security.md) — trust boundaries, threat register, authorization, sandbox, secret, plugin, browser and remote-worker controls.
 6. [Platform & Support Matrix](06-platform-support-matrix.md) — Windows, Linux server/worker, macOS, browser support and release evidence.
 7. [Moonframe Consumption Contract](07-moonframe-consumption-contract.md) — exact dependency pin, package consumption, theme ownership and consumer smoke gates.
-8. [M0 Validation & Proof-of-Concept Gates](08-validation-and-poc-gates.md) — decision closure, required experiments, acceptance evidence and M1 entry criteria.\n9. [Validation Status & Audit Log](09-validation-status-and-audit-log.md) — checks performed, checks not run, and M0/M1 stage status.
+8. [M0 Validation & Proof-of-Concept Gates](08-validation-and-poc-gates.md) — decision closure, required experiments, acceptance evidence and M1 entry criteria.
+9. [Validation Status & Audit Log](09-validation-status-and-audit-log.md) — checks performed, checks not run, and M0/M1 stage status.
 
 ## Machine-readable contracts
 
