@@ -102,20 +102,16 @@
       "required": [
         "payload"
       ],
-      "not": {
-        "required": [
-          "payload_ref"
-        ]
+      "properties": {
+        "payload_ref": false
       }
     },
     {
       "required": [
         "payload_ref"
       ],
-      "not": {
-        "required": [
-          "payload"
-        ]
+      "properties": {
+        "payload": false
       }
     }
   ]
