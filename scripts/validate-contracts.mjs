@@ -110,7 +110,7 @@ function validateFixtureInventory() {
   }
 
   return schemaFiles.map((schemaName) => {
-    const stem = schemaName.replace(/\\.schema\\.json$/, "");
+    const stem = schemaName.replace(/\.schema\.json$/, "");
     const schema = path.join(schemaDirectory, schemaName);
     const valid = path.join(fixtureDirectory, stem + ".valid.json");
     const invalid = path.join(fixtureDirectory, stem + ".invalid.json");
