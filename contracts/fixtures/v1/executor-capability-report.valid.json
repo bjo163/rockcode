@@ -1,0 +1,28 @@
+{
+  "executor_id": "exe_0123456789abcdef",
+  "kind": "local",
+  "status": "healthy",
+  "platform": {
+    "os": "windows",
+    "architecture": "x86_64"
+  },
+  "capabilities": [
+    "filesystem.read"
+  ],
+  "sandbox_profiles": [
+    {
+      "profile_id": "inspect_only",
+      "available": true,
+      "description": "Read-only workspace access."
+    }
+  ],
+  "effective_controls": [
+    {
+      "control": "filesystem_boundary",
+      "enforced": true,
+      "evidence": "Read-only workspace handle scope."
+    }
+  ],
+  "reported_at": "2026-11-02T10:00:00Z",
+  "agent_version": "0.1.0"
+}
