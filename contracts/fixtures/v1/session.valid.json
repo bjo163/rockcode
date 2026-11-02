@@ -1,0 +1,12 @@
+{
+  "session_id": "ses_0123456789abcdef",
+  "workspace_id": "wsp_0123456789abcdef",
+  "title": "RockCode contract validation",
+  "status": "idle",
+  "owner_id": "usr_0123456789abcdef",
+  "created_at": "2026-11-02T10:00:00Z",
+  "updated_at": "2026-11-02T10:00:00Z",
+  "current_run_id": null,
+  "version": 1,
+  "last_event_seq": 0
+}
