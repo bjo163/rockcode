@@ -21,6 +21,7 @@ M0 does not create application source code, build scripts, Cargo crates, databas
 7. [Moonframe Consumption Contract](07-moonframe-consumption-contract.md) — exact dependency pin, package consumption, theme ownership and consumer smoke gates.
 8. [M0 Validation & Proof-of-Concept Gates](08-validation-and-poc-gates.md) — decision closure, required experiments, acceptance evidence and M1 entry criteria.
 9. [Validation Status & Audit Log](09-validation-status-and-audit-log.md) — checks performed, checks not run, and M0/M1 stage status.
+10. [M1.1 Contract Validation Tooling](M1.1-contract-validation.md) — local validator runner, pinned tools, fixtures and CI workflow.
 
 ## Machine-readable contracts
 
