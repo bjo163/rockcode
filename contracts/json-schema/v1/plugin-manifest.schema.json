@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rockcode.dev/contracts/json-schema/v1/plugin-manifest.schema.json",
+  "title": "RockCode WASM Plugin Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "name",
+    "version",
+    "api_version",
+    "wit_version",
+    "entrypoint",
+    "digest",
+    "publisher",
+    "capabilities_requested",
+    "hooks_subscribed",
+    "minimum_host_version",
+    "permissions_description",
+    "license",
+    "source",
+    "release_channel"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$"
+    },
+    "api_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32
+    },
+    "wit_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32
+    },
+    "entrypoint": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?!/)(?!.*\\.\\.)([A-Za-z0-9._/-])+$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "signature": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "enum": [
+            "ed25519"
+          ]
+        },
+        "key_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "value": {
+          "type": "string",
+          "minLength": 40,
+          "maxLength": 512
+        }
+      }
+    },
+    "publisher": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "capabilities_requested": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capability",
+          "scope",
+          "justification"
+        ],
+        "properties": {
+          "capability": {
+            "type": "string",
+            "enum": [
+              "workspace.read",
+              "workspace.write",
+              "process.exec",
+              "process.pty",
+              "network.connect",
+              "browser.control",
+              "artifact.read",
+              "artifact.write",
+              "session.read",
+              "session.annotate",
+              "secrets.use",
+              "notifications.send",
+              "git.mutate"
+            ]
+          },
+          "scope": {
+            "type": "object"
+          },
+          "justification": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        }
+      }
+    },
+    "hooks_subscribed": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "before_tool",
+          "after_tool",
+          "prompt_submit",
+          "turn_end",
+          "permission",
+          "compaction",
+          "session",
+          "artifact"
+        ]
+      }
+    },
+    "configuration_schema": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "minimum_host_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "permissions_description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "source": {
+      "type": "string",
+      "format": "uri"
+    },
+    "release_channel": {
+      "type": "string",
+      "enum": [
+        "stable",
+        "beta",
+        "experimental"
+      ]
+    },
+    "homepage": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uri"
+    },
+    "support_url": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uri"
+    }
+  }
+}
