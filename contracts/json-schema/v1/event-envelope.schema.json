@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rockcode.dev/contracts/json-schema/v1/event-envelope.schema.json",
+  "title": "RockCode Event Envelope v1",
+  "description": "Canonical durable event envelope. Sequence is monotonic per aggregate, not globally.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "aggregate_type",
+    "aggregate_id",
+    "seq",
+    "schema_version",
+    "type",
+    "occurred_at",
+    "correlation_id",
+    "causation_id",
+    "payload"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^evt_[A-Za-z0-9_-]{16,96}$"
+    },
+    "aggregate_type": {
+      "type": "string",
+      "enum": [
+        "session",
+        "workspace",
+        "task",
+        "executor",
+        "organization"
+      ]
+    },
+    "aggregate_id": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "type": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*){1,5}$",
+      "maxLength": 160
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^corr_[A-Za-z0-9_-]{16,96}$"
+    },
+    "causation_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^evt_[A-Za-z0-9_-]{16,96}$"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "payload_ref": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "sha256"
+      ],
+      "properties": {
+        "artifact_id": {
+          "type": "string",
+          "pattern": "^art_[A-Za-z0-9_-]{16,96}$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "media_type": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "byte_length": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "payload"
+      ],
+      "not": {
+        "required": [
+          "payload_ref"
+        ]
+      }
+    },
+    {
+      "required": [
+        "payload_ref"
+      ],
+      "not": {
+        "required": [
+          "payload"
+        ]
+      }
+    }
+  ]
+}
