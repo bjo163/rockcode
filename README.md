@@ -41,7 +41,7 @@ The current architecture baseline is maintained in [`docs/specs/`](docs/specs/):
 | [03 — Final Architecture Specification](docs/specs/03-final-architecture-specification.md) | Proposed system architecture, Rust crate boundaries, domain model, protocol, storage, execution, plugins, security, clients, and roadmap. |
 | [04 — UI Design System](docs/specs/04-ui-design-system.md) | Industrial grunge × manga linework × funky Gen-Z direction, Moonframe integration, skins, layout, interaction, accessibility, motion, and visual QA. |
 | [05 — UI Package Architecture](docs/specs/05-ui-package-architecture.md) | Moonframe dependency, RockCode UI packages, component inventory, workbench, editor/terminal adapters, and UI implementation gates. |
-| [M0 Architecture & Contracts](docs/specs/m0/README.md) | System context, crate boundaries, REST/WS protocol, domain invariants, threat model, platform matrix, Moonframe consumption, machine schemas, and POC gates. |
+| [M1.1 — Contract Validation Tooling](docs/specs/m0/M1.1-contract-validation.md) | Local and CI contract validation runner, pinned validators, positive/negative JSON fixtures, and GitHub Actions. |\n| [M0 Architecture & Contracts](docs/specs/m0/README.md) | System context, crate boundaries, REST/WS protocol, domain invariants, threat model, platform matrix, Moonframe consumption, machine schemas, and POC gates. |
 | [Specification Pack README](docs/specs/README.md) | Scope, governing decisions, status, and limitations of the documents. |
 
 ## Initial technology direction
