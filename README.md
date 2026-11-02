@@ -1,3 +1,79 @@
 # RockCode
 
-Rust-first autonomous coding and engineering platform.
+**Rust-first autonomous coding and engineering platform.**
+
+RockCode is being designed as one reusable agent engine powering Windows Desktop, Web, CLI, and local/remote execution. It combines multi-agent orchestration, extensible tools and plugins, coding workflows, workspace isolation, and remote workers behind shared contracts.
+
+> **Project status:** Architecture and research baseline. Implementation has not started. The specifications describe proposed design decisions, not shipped capabilities.
+
+## Product surfaces
+
+- **Desktop:** Windows-first Tauri 2 application with a React interface.
+- **Web:** React + Vite control center for local and remote RockCode servers.
+- **CLI/TUI:** Rust client using the same session and protocol contracts.
+- **Agent Server / Workers:** Headless Rust runtime with local, container, and remote execution backends.
+
+## Architecture principles
+
+1. **One engine, multiple clients.** Agent loop, session lifecycle, tool dispatch, policy, context management, and persistence semantics live outside the UI.
+2. **Rust-first runtime.** The kernel, orchestration, server, execution control, and security-sensitive boundaries are implemented in Rust.
+3. **Local-first, remote-ready.** Single-user desktop mode works locally; remote mode adds identity, multi-user isolation, durable jobs, and worker orchestration.
+4. **Policy is not a sandbox.** Permission decisions and OS/container isolation are independent enforcement layers.
+5. **Explicit contracts.** Versioned HTTP APIs, event schemas, SDKs, plugin ABI, and persistence migrations are treated as product interfaces.
+6. **Composable extensions.** Capability-scoped WASM/WIT plugins, MCP integrations, skills, and provider adapters extend the platform without coupling the kernel to implementations.
+
+## Specification pack
+
+The current architecture baseline is maintained in [`docs/specs/`](docs/specs/):
+
+| Document | Purpose |
+|---|---|
+| [01 — Feature Parity Matrix](docs/specs/01-feature-parity-matrix.md) | Evidence-oriented comparison of upstream coding-agent projects and target capability tiers. |
+| [02 — Gap Analysis](docs/specs/02-gap-analysis.md) | Missing capabilities, risks, priorities, acceptance criteria, and implementation gates. |
+| [03 — Final Architecture Specification](docs/specs/03-final-architecture-specification.md) | Proposed system architecture, Rust crate boundaries, domain model, protocol, storage, execution, plugins, security, clients, and roadmap. |
+| [Specification Pack README](docs/specs/README.md) | Scope, governing decisions, status, and limitations of the documents. |
+
+## Initial technology direction
+
+| Area | Proposed baseline |
+|---|---|
+| Core/runtime | Rust stable + Tokio |
+| HTTP/WebSocket | Axum + Tower |
+| Desktop | Tauri 2 + React + TypeScript |
+| Web | React + TypeScript + Vite |
+| CLI/TUI | Rust + Clap + Ratatui/Crossterm |
+| Local persistence | SQLite |
+| Remote persistence | PostgreSQL + S3-compatible object storage |
+| Plugin runtime | Wasmtime + WebAssembly Component Model (WIT) |
+| Observability | tracing + OpenTelemetry |
+
+These are architecture proposals and are subject to proof-of-concept validation before production adoption.
+
+## Upstream research references
+
+RockCode's research baseline studies these projects as references, not as codebases to merge wholesale:
+
+- [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
+- [OpenCode](https://github.com/anomalyco/opencode)
+- [Goose](https://github.com/aaif-goose/goose)
+- [Codex](https://github.com/openai/codex)
+- [Drift](https://github.com/kylepelham/Drift)
+- [Agent Code](https://github.com/avala-ai/agent-code)
+- [OpenHands Agent Canvas](https://github.com/OpenHands/OpenHands)
+- [OpenHands Software Agent SDK](https://github.com/OpenHands/software-agent-sdk)
+- [OpenHands Automation](https://github.com/OpenHands/automation)
+
+Upstream features, release status, licensing, and security posture must be revalidated against exact commits before code is adopted. The parity matrix records the audit snapshot and evidence limits.
+
+## Development status
+
+- [x] Initial upstream architecture research
+- [x] Feature parity matrix
+- [x] Gap analysis
+- [x] Proposed final architecture specification
+- [ ] Validate Rust crate boundaries with minimal proof of concept
+- [ ] Freeze protocol and domain contracts
+- [ ] Implement the Rust agent kernel
+- [ ] Implement server, execution workers, and clients
+
+No third-party source code has been copied into this repository as part of the initial specification upload.
