@@ -1,0 +1,40 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rockcode.dev/contracts/json-schema/v1/capabilities.schema.json",
+  "title": "RockCode Capabilities v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["server_version", "protocol_versions", "event_schema_versions", "features", "executors"],
+  "properties": {
+    "server_version": { "type": "string" },
+    "minimum_client_version": { "type": "string" },
+    "protocol_versions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "event_schema_versions": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 1 }
+    },
+    "features": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "executors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "available"],
+        "properties": {
+          "kind": { "type": "string", "enum": ["local", "container", "remote"] },
+          "available": { "type": "boolean" },
+          "limitations": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

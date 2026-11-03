@@ -1,0 +1,24 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rockcode.dev/contracts/json-schema/v1/readiness.schema.json",
+  "title": "RockCode Readiness v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "checks"],
+  "properties": {
+    "status": { "type": "string", "enum": ["ready", "degraded", "not_ready"] },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "status"],
+        "properties": {
+          "name": { "type": "string" },
+          "status": { "type": "string", "enum": ["ok", "degraded", "failed"] },
+          "detail": { "type": "string" }
+        }
+      }
+    }
+  }
+}

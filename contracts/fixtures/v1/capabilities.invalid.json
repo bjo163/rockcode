@@ -1,0 +1,1 @@
+{"server_version": "0.1.0", "protocol_versions": ["1"], "event_schema_versions": [1], "features": ["core"], "executors": [{"kind": "invalid", "available": true}]}
