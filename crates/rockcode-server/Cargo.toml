@@ -1,0 +1,15 @@
+﻿[package]
+name = "rockcode-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+axum = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+rockcode-protocol = { path = "../rockcode-protocol" }

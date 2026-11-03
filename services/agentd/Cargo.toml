@@ -1,0 +1,18 @@
+﻿[package]
+name = "agentd"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "agentd"
+path = "src/main.rs"
+
+[dependencies]
+rockcode-server = { path = "../../crates/rockcode-server" }
+rockcode-runtime = { path = "../../crates/rockcode-runtime" }
+tokio = { workspace = true }
+axum = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }

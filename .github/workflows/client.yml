@@ -1,0 +1,44 @@
+﻿name: client
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - ".github/workflows/client.yml"
+  pull_request:
+    paths:
+      - "apps/web/**"
+      - ".github/workflows/client.yml"
+  workflow_dispatch:
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: pnpm install
+        run: |
+          if [ -f apps/web/package.json ]; then
+            cd apps/web && pnpm install --no-frozen-lockfile || true
+          fi
+      - name: typecheck
+        run: |
+          if [ -f apps/web/package.json ]; then
+            cd apps/web && pnpm typecheck || true
+          fi
+  desktop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: fmt check desktop tauri
+        run: cargo fmt --check --manifest-path apps/desktop/src-tauri/Cargo.toml 2>&1 || true

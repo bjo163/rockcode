@@ -1,0 +1,12 @@
+﻿[package]
+name = "rockcode-sdk"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+rockcode-protocol = { path = "../rockcode-protocol" }
+reqwest = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }

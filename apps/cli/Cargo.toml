@@ -1,0 +1,15 @@
+﻿[package]
+name = "cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "rockcode"
+path = "src/main.rs"
+
+[dependencies]
+rockcode-sdk = { path = "../../crates/rockcode-sdk" }
+tokio = { workspace = true }
+anyhow = { workspace = true }

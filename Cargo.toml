@@ -1,0 +1,52 @@
+﻿[workspace]
+members = [
+  "crates/rockcode-domain",
+  "crates/rockcode-kernel",
+  "crates/rockcode-runtime",
+  "crates/rockcode-providers",
+  "crates/rockcode-tools",
+  "crates/rockcode-policy",
+  "crates/rockcode-execution",
+  "crates/rockcode-storage",
+  "crates/rockcode-server",
+  "crates/rockcode-protocol",
+  "crates/rockcode-sdk",
+  "crates/rockcode-credentials",
+  "crates/rockcode-plugin-host",
+  "crates/rockcode-lsp",
+  "crates/rockcode-browser",
+  "crates/rockcode-observability",
+  "crates/rockcode-sandbox-windows",
+  "crates/rockcode-sandbox-linux",
+  "services/agentd",
+  "apps/cli",
+  "tests/rockcode-arch-tests",
+]
+exclude = [
+  "apps/desktop",
+  "apps/web",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+version = "0.1.0"
+authors = ["RockCode"]
+
+[workspace.dependencies]
+anyhow = "1.0"
+thiserror = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.40", features = ["rt-multi-thread", "macros", "time", "sync"] }
+uuid = { version = "1.10", features = ["v4", "v7", "serde"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+axum = { version = "0.7", features = ["json"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["trace"] }
+jsonschema = "0.18"
+async-trait = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
+reqwest = { version = "0.12", features = ["json"], default-features = false }
