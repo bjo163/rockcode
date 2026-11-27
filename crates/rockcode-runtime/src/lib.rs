@@ -92,7 +92,9 @@ impl Runtime {
                 response.tool_calls.clone(),
             ));
 
-            let decisions = self.authorize_tool_batch(&response.tool_calls, &tool_definitions).await?;
+            let decisions = self
+                .authorize_tool_batch(&response.tool_calls, &tool_definitions)
+                .await?;
             let mut pending_approvals = Vec::new();
             for (call, decision) in response.tool_calls.iter().zip(&decisions) {
                 if *decision == ToolDecision::ApprovalRequired {
@@ -168,12 +170,15 @@ impl Runtime {
                             "Tool call denied by policy.",
                         ));
                     }
-                    ToolDecision::ApprovalRequired => unreachable!("approvals are handled before invocation"),
+                    ToolDecision::ApprovalRequired => {
+                        unreachable!("approvals are handled before invocation")
+                    }
                 }
             }
         }
 
-        self.emit_event(json!({"type": "run.turn_limit_reached"})).await?;
+        self.emit_event(json!({"type": "run.turn_limit_reached"}))
+            .await?;
         Ok(AgentRun {
             status: RunStatus::Failed,
             final_text: "The agent reached its configured turn limit.".to_string(),
@@ -189,10 +194,12 @@ impl Runtime {
     ) -> Result<Vec<ToolDecision>, KernelError> {
         let mut decisions = Vec::with_capacity(calls.len());
         for call in calls {
-            let arguments = serde_json::from_str::<Value>(&call.arguments)
-                .map_err(|_| KernelError::Gateway)?;
+            let arguments =
+                serde_json::from_str::<Value>(&call.arguments).map_err(|_| KernelError::Gateway)?;
             if !arguments.is_object()
-                || !definitions.iter().any(|definition| definition.name == call.name)
+                || !definitions
+                    .iter()
+                    .any(|definition| definition.name == call.name)
             {
                 decisions.push(ToolDecision::Deny);
                 continue;
@@ -394,8 +401,12 @@ mod tests {
         assert_eq!(result.executed_tools, 1);
         assert_eq!(tools.calls.load(Ordering::SeqCst), 1);
         let events = sink.events.lock().unwrap();
-        assert!(events.iter().any(|event| event.contains("\"type\":\"tool.started\"")));
-        assert!(events.iter().any(|event| event.contains("\"type\":\"tool.succeeded\"")));
+        assert!(events
+            .iter()
+            .any(|event| event.contains("\"type\":\"tool.started\"")));
+        assert!(events
+            .iter()
+            .any(|event| event.contains("\"type\":\"tool.succeeded\"")));
     }
 
     #[tokio::test]
@@ -486,7 +497,12 @@ mod tests {
 
         assert_eq!(result.status, RunStatus::Succeeded);
         assert_eq!(tools.calls.load(Ordering::SeqCst), 0);
-        assert!(sink.events.lock().unwrap().iter().any(|event| event.contains("tool.denied")));
+        assert!(sink
+            .events
+            .lock()
+            .unwrap()
+            .iter()
+            .any(|event| event.contains("tool.denied")));
     }
 
     #[tokio::test]
