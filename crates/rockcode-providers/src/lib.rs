@@ -230,7 +230,7 @@ mod tests {
             ChatMessage::system("You are a coding assistant."),
             ChatMessage::user("Inspect this repository."),
         ]);
-        request.temperature = Some(0.2);
+        request.temperature = Some(0.25);
         request.max_output_tokens = Some(1024);
 
         let payload = gateway.build_request(&request);
@@ -238,7 +238,7 @@ mod tests {
         assert_eq!(payload["model"], "test-model");
         assert_eq!(payload["messages"][0]["role"], "system");
         assert_eq!(payload["messages"][1]["role"], "user");
-        assert_eq!(payload["temperature"], 0.2);
+        assert_eq!(payload["temperature"], 0.25);
         assert_eq!(payload["max_tokens"], 1024);
         assert!(payload.get("api_key").is_none());
     }
