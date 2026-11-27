@@ -196,11 +196,25 @@ impl Runtime {
         for call in calls {
             let arguments =
                 serde_json::from_str::<Value>(&call.arguments).map_err(|_| KernelError::Gateway)?;
-            if !arguments.is_object()
-                || !definitions
-                    .iter()
-                    .any(|definition| definition.name == call.name)
-            {
+            let Some(definition) = definitions
+                .iter()
+                .find(|definition| definition.name == call.name)
+            else {
+                decisions.push(ToolDecision::Deny);
+                continue;
+            };
+            if !arguments.is_object() {
+                decisions.push(ToolDecision::Deny);
+                continue;
+            }
+            let schema = match jsonschema::JSONSchema::compile(&definition.parameters) {
+                Ok(schema) => schema,
+                Err(_) => {
+                    decisions.push(ToolDecision::Deny);
+                    continue;
+                }
+            };
+            if schema.validate(&arguments).is_err() {
                 decisions.push(ToolDecision::Deny);
                 continue;
             }
@@ -218,8 +232,7 @@ impl Runtime {
         self.emit_event(json!({
             "type": "tool.approval_required",
             "tool_call_id": call.id,
-            "tool_name": call.name,
-            "arguments": call.arguments
+            "tool_name": call.name
         }))
         .await
     }
@@ -339,7 +352,12 @@ mod tests {
         ToolDefinition {
             name: "workspace.read_file".to_string(),
             description: "Read one file".to_string(),
-            parameters: json!({"type":"object", "properties":{"path":{"type":"string"}}}),
+            parameters: json!({
+                "type": "object",
+                "properties": {"path": {"type": "string"}},
+                "required": ["path"],
+                "additionalProperties": false
+            }),
         }
     }
 
@@ -475,6 +493,36 @@ mod tests {
 
         assert_eq!(result.status, RunStatus::WaitingApproval);
         assert_eq!(result.pending_approvals.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn schema_invalid_arguments_are_denied_without_execution() {
+        let mut invalid_call = read_file_call();
+        invalid_call.tool_calls[0].arguments = "{\"path\":42}".to_string();
+        let gateway = Arc::new(FakeGateway::new(vec![invalid_call, final_response()]));
+        let sink = Arc::new(RecordingSink::default());
+        let tools = Arc::new(FakeTools::new());
+        let policy = Arc::new(FixedPolicy(ToolDecision::Allow));
+        let runtime = Runtime::with_tools(gateway, sink.clone(), tools.clone(), policy);
+
+        let result = runtime
+            .run_agent(
+                vec![ChatMessage::user("Read README")],
+                vec![read_file_definition()],
+                &CancellationToken::new(),
+                3,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(result.status, RunStatus::Succeeded);
+        assert_eq!(tools.calls.load(Ordering::SeqCst), 0);
+        assert!(sink
+            .events
+            .lock()
+            .unwrap()
+            .iter()
+            .any(|event| event.contains("tool.denied")));
     }
 
     #[tokio::test]
