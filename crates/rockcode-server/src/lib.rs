@@ -76,7 +76,10 @@ async fn auth_middleware(
     next: Next,
 ) -> Result<Response, (StatusCode, Json<ErrorResp>)> {
     let path = req.uri().path();
-    if matches!(path, "/health/live" | "/health/ready") {
+    if matches!(
+        path,
+        "/health/live" | "/health/ready" | "/v1/health/live" | "/v1/health/ready"
+    ) {
         return Ok(next.run(req).await);
     }
 
@@ -111,10 +114,14 @@ pub fn app() -> Router {
 }
 
 pub fn app_with_token(token: impl Into<String>) -> Router {
-    Router::new()
+    let endpoints = Router::new()
         .route("/health/live", get(health_live))
         .route("/health/ready", get(health_ready))
-        .route("/capabilities", get(capabilities))
+        .route("/capabilities", get(capabilities));
+
+    Router::new()
+        .merge(endpoints.clone())
+        .nest("/v1", endpoints)
         .layer(middleware::from_fn_with_state(
             Arc::<str>::from(token.into()),
             auth_middleware,
