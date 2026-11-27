@@ -4,7 +4,7 @@
 
 RockCode is being designed as one reusable agent engine powering Windows Desktop, Web, CLI, and local/remote execution. It combines multi-agent orchestration, extensible tools and plugins, coding workflows, workspace isolation, and remote workers behind shared contracts.
 
-> **Project status:** M1.2 server bootstrap and deterministic runtime lifecycle tests are merged to main. M1.3 provider-neutral completion contracts and the OpenAI-compatible gateway adapter are merged to main. Structured tool calling, workspace editing, persistent sessions, execution workers, sandbox, and Desktop/Web applications remain unimplemented. Specifications describe proposed capabilities, not shipped features.
+> **Project status:** M1.2 server bootstrap and M1.3 provider-neutral completion contracts/OpenAI-compatible gateway are merged to main. M1.4 adds provider-neutral structured tool-call contracts, OpenAI-compatible tool mapping, bounded runtime orchestration and policy/approval boundaries, currently under CI review. Workspace tools, persistent sessions, execution workers, sandbox and Desktop/Web applications remain unimplemented. Specifications describe proposed capabilities, not shipped features.
 
 ## Product surfaces
 
@@ -89,7 +89,9 @@ Upstream features, release status, licensing, and security posture must be reval
 - [x] Authenticated loopback bootstrap and deterministic runtime lifecycle tests merged to main
 - [x] Provider-neutral completion request/response contracts merged to main
 - [x] OpenAI-compatible HTTP gateway adapter merged to main with env-based secrets, loopback-only HTTP and HTTPS for remote providers
-- [ ] Structured model tool-calling loop and durable run events
+- [x] Structured tool-call contracts and OpenAI-compatible request/response mapping added (CI review pending)
+- [x] Bounded runtime orchestration with explicit allow/approval/deny decisions (CI review pending)
+- [ ] Durable session event persistence and approval resumption
 - [ ] Policy-gated workspace file read/write, diff and terminal tools
 - [ ] Persistent sessions, event replay and storage
 - [ ] Windows sandbox and isolated execution workers
