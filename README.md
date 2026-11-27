@@ -4,7 +4,7 @@
 
 RockCode is being designed as one reusable agent engine powering Windows Desktop, Web, CLI, and local/remote execution. It combines multi-agent orchestration, extensible tools and plugins, coding workflows, workspace isolation, and remote workers behind shared contracts.
 
-> **Project status:** M1.1 contract-validation tooling is being established. The product runtime, execution workers and Desktop/Web applications have not started implementation. The specifications describe proposed design decisions, not shipped capabilities.
+> **Project status:** M1.1 contract validation is green on the latest recorded main commit. M1.2 now has a Rust workspace, server bootstrap, authenticated loopback API, typed SDK and deterministic runtime tests under CI review. The real provider/tool loop, persistent sessions, execution workers, sandbox, and Desktop/Web applications are still not implemented. Specifications describe proposed capabilities, not shipped features.
 
 ## Product surfaces
 
@@ -84,10 +84,14 @@ Upstream features, release status, licensing, and security posture must be reval
 - [x] Gap analysis
 - [x] Proposed final architecture specification
 - [x] M0 system, domain, protocol, security, platform and UI dependency contracts authored
-- [ ] Validate OpenAPI, AsyncAPI and JSON Schemas with pinned validators
-- [ ] Validate Rust crate boundaries with minimal proof of concept
-- [ ] Freeze protocol and domain contracts
-- [ ] Implement the Rust agent kernel
-- [ ] Implement server, execution workers, and clients
+- [x] Contract validation tooling committed; latest recorded main workflow passes
+- [x] Rust workspace, server bootstrap and typed health/capabilities protocol scaffolded
+- [x] Authenticated loopback bootstrap and deterministic runtime lifecycle tests added (CI review pending)
+- [ ] Complete POC-01 with full kernel/runtime/server integration evidence
+- [ ] Implement real provider adapters and structured tool-calling loop
+- [ ] Implement policy-gated workspace file and terminal tools
+- [ ] Implement persistent sessions, event replay and storage
+- [ ] Implement Windows sandbox and isolated execution workers
+- [ ] Implement Desktop Tauri + React workbench and Web client
 
 No third-party source code has been copied into this repository as part of the initial specification upload.
