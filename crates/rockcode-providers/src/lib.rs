@@ -3,7 +3,7 @@ use std::{env, time::Duration};
 use async_trait::async_trait;
 use reqwest::Client;
 use rockcode_kernel::{
-    ChatMessage, CompletionRequest, CompletionResponse, KernelError, ModelGateway,
+    ChatMessage, CompletionRequest, CompletionResponse, KernelError, ModelGateway, ToolCall,
 };
 use serde_json::{json, Value};
 use thiserror::Error;
@@ -110,14 +110,8 @@ impl OpenAiCompatibleGateway {
         let messages = request
             .messages
             .iter()
-            .map(|message: &ChatMessage| {
-                json!({
-                    "role": message.role,
-                    "content": message.content
-                })
-            })
+            .map(serialize_message)
             .collect::<Vec<Value>>();
-
         let mut payload = json!({
             "model": self.config.model,
             "messages": messages
@@ -129,16 +123,121 @@ impl OpenAiCompatibleGateway {
         if let Some(max_output_tokens) = request.max_output_tokens {
             payload["max_tokens"] = json!(max_output_tokens);
         }
+        if !request.tools.is_empty() {
+            payload["tools"] = Value::Array(
+                request
+                    .tools
+                    .iter()
+                    .map(|tool| {
+                        json!({
+                            "type": "function",
+                            "function": {
+                                "name": tool.name,
+                                "description": tool.description,
+                                "parameters": tool.parameters
+                            }
+                        })
+                    })
+                    .collect(),
+            );
+            payload["tool_choice"] = json!("auto");
+        }
 
         payload
     }
 }
 
+fn serialize_message(message: &ChatMessage) -> Value {
+    let mut output = json!({
+        "role": message.role,
+        "content": if message.content.is_empty() && !message.tool_calls.is_empty() {
+            Value::Null
+        } else {
+            Value::String(message.content.clone())
+        }
+    });
+
+    if let Some(name) = &message.name {
+        output["name"] = json!(name);
+    }
+    if let Some(tool_call_id) = &message.tool_call_id {
+        output["tool_call_id"] = json!(tool_call_id);
+    }
+    if !message.tool_calls.is_empty() {
+        output["tool_calls"] = Value::Array(
+            message
+                .tool_calls
+                .iter()
+                .map(|call| {
+                    json!({
+                        "id": call.id,
+                        "type": "function",
+                        "function": {
+                            "name": call.name,
+                            "arguments": call.arguments
+                        }
+                    })
+                })
+                .collect(),
+        );
+    }
+
+    output
+}
+
+fn parse_tool_calls(value: Option<&Value>) -> Result<Vec<ToolCall>, KernelError> {
+    let Some(value) = value else {
+        return Ok(Vec::new());
+    };
+    let calls = value.as_array().ok_or(KernelError::Gateway)?;
+    let mut output = Vec::with_capacity(calls.len());
+    let mut seen_ids = std::collections::HashSet::new();
+
+    for call in calls {
+        let id = call.get("id").and_then(Value::as_str).unwrap_or_default();
+        let function = call.get("function").ok_or(KernelError::Gateway)?;
+        let name = function
+            .get("name")
+            .and_then(Value::as_str)
+            .unwrap_or_default();
+        let arguments = function
+            .get("arguments")
+            .and_then(Value::as_str)
+            .unwrap_or_default();
+
+        if id.is_empty()
+            || name.is_empty()
+            || arguments.is_empty()
+            || !seen_ids.insert(id.to_string())
+        {
+            return Err(KernelError::Gateway);
+        }
+
+        serde_json::from_str::<Value>(arguments).map_err(|_| KernelError::Gateway)?;
+        output.push(ToolCall {
+            id: id.to_string(),
+            name: name.to_string(),
+            arguments: arguments.to_string(),
+        });
+    }
+
+    Ok(output)
+}
+
 fn parse_response(body: &Value) -> Result<CompletionResponse, KernelError> {
-    let content = body
-        .pointer("/choices/0/message/content")
-        .and_then(Value::as_str)
+    let message = body
+        .pointer("/choices/0/message")
         .ok_or(KernelError::Gateway)?;
+    let content = message
+        .get("content")
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .to_string();
+    let tool_calls = parse_tool_calls(message.get("tool_calls"))?;
+
+    if content.is_empty() && tool_calls.is_empty() {
+        return Err(KernelError::Gateway);
+    }
 
     let finish_reason = body
         .pointer("/choices/0/finish_reason")
@@ -146,7 +245,8 @@ fn parse_response(body: &Value) -> Result<CompletionResponse, KernelError> {
         .map(str::to_string);
 
     Ok(CompletionResponse {
-        content: content.to_string(),
+        content,
+        tool_calls,
         finish_reason,
     })
 }
@@ -186,7 +286,7 @@ impl ModelGateway for OpenAiCompatibleGateway {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rockcode_kernel::MessageRole;
+    use rockcode_kernel::{MessageRole, ToolDefinition};
 
     fn config() -> OpenAiCompatibleConfig {
         OpenAiCompatibleConfig::new("https://api.example.test/v1/", "test-secret", "test-model")
@@ -225,7 +325,7 @@ mod tests {
     }
 
     #[test]
-    fn maps_canonical_messages_to_openai_compatible_request() {
+    fn maps_canonical_messages_and_tools_to_openai_compatible_request() {
         let gateway = OpenAiCompatibleGateway::new(config()).unwrap();
         let mut request = CompletionRequest::new(vec![
             ChatMessage::system("You are a coding assistant."),
@@ -233,6 +333,16 @@ mod tests {
         ]);
         request.temperature = Some(0.25);
         request.max_output_tokens = Some(1024);
+        request.tools = vec![ToolDefinition {
+            name: "workspace.read_file".to_string(),
+            description: "Read a UTF-8 text file from the selected workspace.".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {"path": {"type": "string"}},
+                "required": ["path"],
+                "additionalProperties": false
+            }),
+        }];
 
         let payload = gateway.build_request(&request);
 
@@ -241,6 +351,11 @@ mod tests {
         assert_eq!(payload["messages"][1]["role"], "user");
         assert_eq!(payload["temperature"], 0.25);
         assert_eq!(payload["max_tokens"], 1024);
+        assert_eq!(
+            payload["tools"][0]["function"]["name"],
+            "workspace.read_file"
+        );
+        assert_eq!(payload["tool_choice"], "auto");
         assert!(payload.get("api_key").is_none());
     }
 
@@ -256,16 +371,79 @@ mod tests {
         let parsed = parse_response(&response).unwrap();
 
         assert_eq!(parsed.content, "Ready to inspect code.");
+        assert!(parsed.tool_calls.is_empty());
         assert_eq!(parsed.finish_reason.as_deref(), Some("stop"));
     }
 
     #[test]
-    fn rejects_incomplete_or_tool_only_response_shapes() {
+    fn parses_structured_tool_calls_and_validates_json_arguments() {
+        let response = json!({
+            "choices": [{
+                "message": {
+                    "role": "assistant",
+                    "content": null,
+                    "tool_calls": [{
+                        "id": "call_1",
+                        "type": "function",
+                        "function": {
+                            "name": "workspace.read_file",
+                            "arguments": "{\"path\":\"README.md\"}"
+                        }
+                    }]
+                },
+                "finish_reason": "tool_calls"
+            }]
+        });
+
+        let parsed = parse_response(&response).unwrap();
+
+        assert_eq!(parsed.content, "");
+        assert_eq!(parsed.tool_calls.len(), 1);
+        assert_eq!(parsed.tool_calls[0].id, "call_1");
+        assert_eq!(parsed.tool_calls[0].name, "workspace.read_file");
+        assert_eq!(parsed.tool_calls[0].arguments, "{\"path\":\"README.md\"}");
+    }
+
+    #[test]
+    fn rejects_incomplete_or_malformed_tool_call_shapes() {
         assert!(parse_response(&json!({"choices": []})).is_err());
         assert!(parse_response(&json!({
-            "choices": [{"message": {"tool_calls": []}, "finish_reason": "tool_calls"}]
+            "choices": [{
+                "message": {
+                    "content": null,
+                    "tool_calls": [{
+                        "id": "call_1",
+                        "function": {"name": "read_file", "arguments": "{bad json"}
+                    }]
+                },
+                "finish_reason": "tool_calls"
+            }]
         }))
         .is_err());
+        assert!(parse_response(&json!({
+            "choices": [{"message": {"content": null, "tool_calls": []}, "finish_reason": "tool_calls"}]
+        }))
+        .is_err());
+    }
+
+    #[test]
+    fn serializes_assistant_tool_calls_and_tool_results() {
+        let call = ToolCall {
+            id: "call_1".to_string(),
+            name: "workspace.read_file".to_string(),
+            arguments: "{\"path\":\"README.md\"}".to_string(),
+        };
+        let assistant = ChatMessage::assistant_tool_calls("", vec![call]);
+        let result = ChatMessage::tool_result("call_1", "workspace.read_file", "file contents");
+
+        let assistant_json = serialize_message(&assistant);
+        let result_json = serialize_message(&result);
+
+        assert!(assistant_json["content"].is_null());
+        assert_eq!(assistant_json["tool_calls"][0]["id"], "call_1");
+        assert_eq!(result_json["role"], "tool");
+        assert_eq!(result_json["tool_call_id"], "call_1");
+        assert_eq!(result_json["name"], "workspace.read_file");
     }
 
     #[test]
