@@ -73,10 +73,7 @@ impl ChatMessage {
         Self::new(MessageRole::Assistant, content)
     }
 
-    pub fn assistant_tool_calls(
-        content: impl Into<String>,
-        tool_calls: Vec<ToolCall>,
-    ) -> Self {
+    pub fn assistant_tool_calls(content: impl Into<String>, tool_calls: Vec<ToolCall>) -> Self {
         let mut message = Self::assistant(content);
         message.tool_calls = tool_calls;
         message
@@ -132,10 +129,8 @@ pub enum ToolDecision {
 
 #[async_trait]
 pub trait ModelGateway: Send + Sync {
-    async fn complete(
-        &self,
-        request: CompletionRequest,
-    ) -> Result<CompletionResponse, KernelError>;
+    async fn complete(&self, request: CompletionRequest)
+        -> Result<CompletionResponse, KernelError>;
 }
 
 #[async_trait]
