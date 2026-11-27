@@ -4,7 +4,7 @@
 
 RockCode is being designed as one reusable agent engine powering Windows Desktop, Web, CLI, and local/remote execution. It combines multi-agent orchestration, extensible tools and plugins, coding workflows, workspace isolation, and remote workers behind shared contracts.
 
-> **Project status:** M1.1 contract validation is green on the latest recorded main commit. M1.2 now has a Rust workspace, server bootstrap, authenticated loopback API, typed SDK and deterministic runtime tests under CI review. The real provider/tool loop, persistent sessions, execution workers, sandbox, and Desktop/Web applications are still not implemented. Specifications describe proposed capabilities, not shipped features.
+> **Project status:** M1.2 server bootstrap and deterministic runtime lifecycle tests are merged to main. M1.3 introduces a provider-neutral completion contract and an OpenAI-compatible gateway adapter, currently under CI review. Structured tool calling, workspace editing, persistent sessions, execution workers, sandbox, and Desktop/Web applications remain unimplemented. Specifications describe proposed capabilities, not shipped features.
 
 ## Product surfaces
 
@@ -84,14 +84,15 @@ Upstream features, release status, licensing, and security posture must be reval
 - [x] Gap analysis
 - [x] Proposed final architecture specification
 - [x] M0 system, domain, protocol, security, platform and UI dependency contracts authored
-- [x] Contract validation tooling committed; latest recorded main workflow passes
+- [x] Contract validation tooling committed; main workflow green
 - [x] Rust workspace, server bootstrap and typed health/capabilities protocol scaffolded
-- [x] Authenticated loopback bootstrap and deterministic runtime lifecycle tests added (CI review pending)
-- [ ] Complete POC-01 with full kernel/runtime/server integration evidence
-- [ ] Implement real provider adapters and structured tool-calling loop
-- [ ] Implement policy-gated workspace file and terminal tools
-- [ ] Implement persistent sessions, event replay and storage
-- [ ] Implement Windows sandbox and isolated execution workers
-- [ ] Implement Desktop Tauri + React workbench and Web client
+- [x] Authenticated loopback bootstrap and deterministic runtime lifecycle tests merged to main
+- [x] Provider-neutral completion request/response contracts added (CI review pending)
+- [x] OpenAI-compatible HTTP gateway adapter added with env-based secrets and HTTPS support (CI review pending)
+- [ ] Structured model tool-calling loop and durable run events
+- [ ] Policy-gated workspace file read/write, diff and terminal tools
+- [ ] Persistent sessions, event replay and storage
+- [ ] Windows sandbox and isolated execution workers
+- [ ] Desktop Tauri + React workbench and Web client
 
 No third-party source code has been copied into this repository as part of the initial specification upload.
