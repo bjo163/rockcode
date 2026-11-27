@@ -4,7 +4,7 @@
 
 RockCode is being designed as one reusable agent engine powering Windows Desktop, Web, CLI, and local/remote execution. It combines multi-agent orchestration, extensible tools and plugins, coding workflows, workspace isolation, and remote workers behind shared contracts.
 
-> **Project status:** M1.2–M1.4 server bootstrap, provider gateway, structured tool calls and policy-gated runtime are merged to main. M1.5 adds safe read-only workspace file/list tools with path, symlink, credential-path and size controls, currently under CI review. Workspace writes, terminal execution, persistent approvals/sessions, execution workers, sandbox integration and Desktop/Web applications remain unimplemented. Specifications describe proposed capabilities, not shipped features.
+> **Project status:** M1.2 server bootstrap and M1.3 provider-neutral completion contracts/OpenAI-compatible gateway are merged to main. M1.4 adds provider-neutral structured tool-call contracts, OpenAI-compatible tool mapping, bounded runtime orchestration and policy/approval boundaries, currently under CI review. Workspace tools, persistent sessions, execution workers, sandbox and Desktop/Web applications remain unimplemented. Specifications describe proposed capabilities, not shipped features.
 
 ## Product surfaces
 
@@ -43,7 +43,6 @@ The current architecture baseline is maintained in [`docs/specs/`](docs/specs/):
 | [05 — UI Package Architecture](docs/specs/05-ui-package-architecture.md) | Moonframe dependency, RockCode UI packages, component inventory, workbench, editor/terminal adapters, and UI implementation gates. |
 | [M1.1 — Contract Validation Tooling](docs/specs/m0/M1.1-contract-validation.md) | Local and CI contract validation runner, pinned validators, positive/negative JSON fixtures, and GitHub Actions. |
 | [M0 Architecture & Contracts](docs/specs/m0/README.md) | System context, crate boundaries, REST/WS protocol, domain invariants, threat model, platform matrix, Moonframe consumption, machine schemas, and POC gates. |
-| [M1.5 — Safe Workspace Read Tools](docs/specs/m0/M1.5-safe-workspace-read-tools.md) | Read-only workspace file/list tools, path containment, symlink protection, sensitive-path filtering, and bounded output. |
 | [Specification Pack README](docs/specs/README.md) | Scope, governing decisions, status, and limitations of the documents. |
 
 ## Initial technology direction
@@ -90,12 +89,10 @@ Upstream features, release status, licensing, and security posture must be reval
 - [x] Authenticated loopback bootstrap and deterministic runtime lifecycle tests merged to main
 - [x] Provider-neutral completion request/response contracts merged to main
 - [x] OpenAI-compatible HTTP gateway adapter merged to main with env-based secrets, loopback-only HTTP and HTTPS for remote providers
-- [x] Structured tool-call contracts and OpenAI-compatible request/response mapping merged to main
-- [x] Bounded runtime orchestration with JSON Schema validation and approval-safe tool batches merged to main
-- [x] Safe read-only workspace file/list tools added (CI review pending)
+- [x] Structured tool-call contracts and OpenAI-compatible request/response mapping added (CI review pending)
+- [x] Bounded runtime orchestration with explicit allow/approval/deny decisions (CI review pending)
 - [ ] Durable session event persistence and approval resumption
-- [ ] Workspace write/patch tools and terminal execution behind approval and OS sandbox
-- [ ] Persistent sessions, event replay and storage
+- [ ] Policy-gated workspace file read/write, diff and terminal tools
 - [ ] Persistent sessions, event replay and storage
 - [ ] Windows sandbox and isolated execution workers
 - [ ] Desktop Tauri + React workbench and Web client
