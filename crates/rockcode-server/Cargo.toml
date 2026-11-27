@@ -1,4 +1,4 @@
-﻿[package]
+[package]
 name = "rockcode-server"
 version.workspace = true
 edition.workspace = true
@@ -12,4 +12,5 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 tower = { workspace = true }
 tower-http = { workspace = true }
+uuid = { workspace = true }
 rockcode-protocol = { path = "../rockcode-protocol" }
