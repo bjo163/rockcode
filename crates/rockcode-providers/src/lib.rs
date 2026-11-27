@@ -183,12 +183,8 @@ mod tests {
     use rockcode_kernel::MessageRole;
 
     fn config() -> OpenAiCompatibleConfig {
-        OpenAiCompatibleConfig::new(
-            "https://api.example.test/v1/",
-            "test-secret",
-            "test-model",
-        )
-        .unwrap()
+        OpenAiCompatibleConfig::new("https://api.example.test/v1/", "test-secret", "test-model")
+            .unwrap()
     }
 
     #[test]
