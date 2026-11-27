@@ -43,8 +43,7 @@ struct DirectoryListing {
 
 impl WorkspaceToolInvoker {
     pub fn new(root: impl AsRef<Path>) -> Result<Self, WorkspaceToolsError> {
-        let canonical_root =
-            fs::canonicalize(root).map_err(|_| WorkspaceToolsError::InvalidRoot)?;
+        let canonical_root = fs::canonicalize(root).map_err(|_| WorkspaceToolsError::InvalidRoot)?;
         if !canonical_root.is_dir() {
             return Err(WorkspaceToolsError::InvalidRoot);
         }
@@ -101,11 +100,9 @@ impl ToolInvoker for WorkspaceToolInvoker {
         let tool_name = name.to_string();
         let arguments = args.to_string();
 
-        tokio::task::spawn_blocking(move || {
-            execute_tool(root.as_path(), &tool_name, &arguments)
-        })
-        .await
-        .map_err(|_| KernelError::Tool)?
+        tokio::task::spawn_blocking(move || execute_tool(root.as_path(), &tool_name, &arguments))
+            .await
+            .map_err(|_| KernelError::Tool)?
     }
 }
 
@@ -246,9 +243,7 @@ fn validate_relative_path(value: &str, allow_workspace_root: bool) -> Result<Pat
     for component in path.components() {
         match component {
             Component::Normal(_) => {}
-            Component::CurDir
-                if allow_workspace_root && path.components().count() == 1 =>
-            {
+            Component::CurDir if allow_workspace_root && path.components().count() == 1 => {
                 return Ok(PathBuf::new());
             }
             _ => return Err(KernelError::Tool),
@@ -268,10 +263,7 @@ fn canonicalize_inside_root(root: &Path, relative: &Path) -> Result<PathBuf, Ker
 
 fn is_sensitive_path(path: &Path) -> bool {
     path.components().any(|component| match component {
-        Component::Normal(name) => name
-            .to_str()
-            .map(is_sensitive_name)
-            .unwrap_or(true),
+        Component::Normal(name) => name.to_str().map(is_sensitive_name).unwrap_or(true),
         _ => false,
     })
 }
