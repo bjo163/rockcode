@@ -12,9 +12,75 @@ pub enum KernelError {
     Cancelled,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum MessageRole {
+    System,
+    User,
+    Assistant,
+    Tool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ChatMessage {
+    pub role: MessageRole,
+    pub content: String,
+}
+
+impl ChatMessage {
+    pub fn new(role: MessageRole, content: impl Into<String>) -> Self {
+        Self {
+            role,
+            content: content.into(),
+        }
+    }
+
+    pub fn system(content: impl Into<String>) -> Self {
+        Self::new(MessageRole::System, content)
+    }
+
+    pub fn user(content: impl Into<String>) -> Self {
+        Self::new(MessageRole::User, content)
+    }
+
+    pub fn assistant(content: impl Into<String>) -> Self {
+        Self::new(MessageRole::Assistant, content)
+    }
+
+    pub fn tool(content: impl Into<String>) -> Self {
+        Self::new(MessageRole::Tool, content)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompletionRequest {
+    pub messages: Vec<ChatMessage>,
+    pub temperature: Option<f32>,
+    pub max_output_tokens: Option<u32>,
+}
+
+impl CompletionRequest {
+    pub fn new(messages: Vec<ChatMessage>) -> Self {
+        Self {
+            messages,
+            temperature: None,
+            max_output_tokens: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CompletionResponse {
+    pub content: String,
+    pub finish_reason: Option<String>,
+}
+
 #[async_trait]
 pub trait ModelGateway: Send + Sync {
-    async fn complete(&self, req: &str) -> Result<String, KernelError>;
+    async fn complete(
+        &self,
+        request: CompletionRequest,
+    ) -> Result<CompletionResponse, KernelError>;
 }
 
 #[async_trait]
@@ -35,20 +101,24 @@ pub trait Clock: Send + Sync {
 pub struct CancellationToken {
     cancelled: std::sync::Arc<std::sync::atomic::AtomicBool>,
 }
+
 impl CancellationToken {
     pub fn new() -> Self {
         Self {
             cancelled: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
         }
     }
+
     pub fn cancel(&self) {
         self.cancelled
             .store(true, std::sync::atomic::Ordering::SeqCst);
     }
+
     pub fn is_cancelled(&self) -> bool {
         self.cancelled.load(std::sync::atomic::Ordering::SeqCst)
     }
 }
+
 impl Default for CancellationToken {
     fn default() -> Self {
         Self::new()
@@ -80,16 +150,17 @@ pub mod testing {
     use std::collections::VecDeque;
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::{Arc, Mutex};
-    use std::time::{Duration, Instant};
 
     pub struct FixedClock {
         now: u64,
     }
+
     impl FixedClock {
         pub fn new(now: u64) -> Self {
             Self { now }
         }
     }
+
     impl Clock for FixedClock {
         fn now_millis(&self) -> u64 {
             self.now
@@ -100,6 +171,7 @@ pub mod testing {
         responses: Arc<Mutex<VecDeque<String>>>,
         called: Arc<AtomicBool>,
     }
+
     impl FakeGateway {
         pub fn new(responses: Vec<String>) -> Self {
             Self {
@@ -107,16 +179,25 @@ pub mod testing {
                 called: Arc::new(AtomicBool::new(false)),
             }
         }
+
         pub fn was_called(&self) -> bool {
             self.called.load(Ordering::SeqCst)
         }
     }
+
     #[async_trait]
     impl ModelGateway for FakeGateway {
-        async fn complete(&self, _req: &str) -> Result<String, KernelError> {
+        async fn complete(
+            &self,
+            _request: CompletionRequest,
+        ) -> Result<CompletionResponse, KernelError> {
             self.called.store(true, Ordering::SeqCst);
-            let mut q = self.responses.lock().unwrap();
-            q.pop_front().ok_or(KernelError::Gateway)
+            let mut responses = self.responses.lock().unwrap();
+            let content = responses.pop_front().ok_or(KernelError::Gateway)?;
+            Ok(CompletionResponse {
+                content,
+                finish_reason: Some("stop".to_string()),
+            })
         }
     }
 }

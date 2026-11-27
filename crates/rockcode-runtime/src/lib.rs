@@ -1,5 +1,6 @@
 use rockcode_kernel::{
-    transition, CancellationToken, EventSink, KernelError, ModelGateway, RunStatus,
+    transition, CancellationToken, ChatMessage, CompletionRequest, EventSink, KernelError,
+    ModelGateway, RunStatus,
 };
 use std::sync::Arc;
 
@@ -28,7 +29,8 @@ impl Runtime {
             return Ok(RunStatus::Cancelled);
         }
 
-        self.gateway.complete("ping").await?;
+        let request = CompletionRequest::new(vec![ChatMessage::user("ping")]);
+        self.gateway.complete(request).await?;
         self.sink.emit("{\"type\":\"run.succeeded\"}").await?;
 
         transition(RunStatus::Running, "succeed")
@@ -39,6 +41,7 @@ impl Runtime {
 mod tests {
     use super::*;
     use async_trait::async_trait;
+    use rockcode_kernel::CompletionResponse;
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::sync::Mutex;
 
@@ -56,9 +59,15 @@ mod tests {
 
     #[async_trait]
     impl ModelGateway for FakeGateway {
-        async fn complete(&self, _request: &str) -> Result<String, KernelError> {
+        async fn complete(
+            &self,
+            _request: CompletionRequest,
+        ) -> Result<CompletionResponse, KernelError> {
             self.calls.fetch_add(1, Ordering::SeqCst);
-            Ok("pong".to_string())
+            Ok(CompletionResponse {
+                content: "pong".to_string(),
+                finish_reason: Some("stop".to_string()),
+            })
         }
     }
 
