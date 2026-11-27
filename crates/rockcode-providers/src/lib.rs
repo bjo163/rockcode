@@ -107,7 +107,11 @@ impl OpenAiCompatibleGateway {
     }
 
     fn build_request(&self, request: &CompletionRequest) -> Value {
-        let messages = request.messages.iter().map(serialize_message).collect::<Vec<Value>>();
+        let messages = request
+            .messages
+            .iter()
+            .map(serialize_message)
+            .collect::<Vec<Value>>();
         let mut payload = json!({
             "model": self.config.model,
             "messages": messages
@@ -121,7 +125,8 @@ impl OpenAiCompatibleGateway {
         }
         if !request.tools.is_empty() {
             payload["tools"] = Value::Array(
-                request.tools
+                request
+                    .tools
                     .iter()
                     .map(|tool| {
                         json!({
@@ -160,7 +165,8 @@ fn serialize_message(message: &ChatMessage) -> Value {
     }
     if !message.tool_calls.is_empty() {
         output["tool_calls"] = Value::Array(
-            message.tool_calls
+            message
+                .tool_calls
                 .iter()
                 .map(|call| {
                     json!({
@@ -190,7 +196,10 @@ fn parse_tool_calls(value: Option<&Value>) -> Result<Vec<ToolCall>, KernelError>
     for call in calls {
         let id = call.get("id").and_then(Value::as_str).unwrap_or_default();
         let function = call.get("function").ok_or(KernelError::Gateway)?;
-        let name = function.get("name").and_then(Value::as_str).unwrap_or_default();
+        let name = function
+            .get("name")
+            .and_then(Value::as_str)
+            .unwrap_or_default();
         let arguments = function
             .get("arguments")
             .and_then(Value::as_str)
@@ -342,7 +351,10 @@ mod tests {
         assert_eq!(payload["messages"][1]["role"], "user");
         assert_eq!(payload["temperature"], 0.25);
         assert_eq!(payload["max_tokens"], 1024);
-        assert_eq!(payload["tools"][0]["function"]["name"], "workspace.read_file");
+        assert_eq!(
+            payload["tools"][0]["function"]["name"],
+            "workspace.read_file"
+        );
         assert_eq!(payload["tool_choice"], "auto");
         assert!(payload.get("api_key").is_none());
     }
@@ -406,10 +418,12 @@ mod tests {
                 },
                 "finish_reason": "tool_calls"
             }]
-        })).is_err());
+        }))
+        .is_err());
         assert!(parse_response(&json!({
             "choices": [{"message": {"content": null, "tool_calls": []}, "finish_reason": "tool_calls"}]
-        })).is_err());
+        }))
+        .is_err());
     }
 
     #[test]
