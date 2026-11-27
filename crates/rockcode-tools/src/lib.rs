@@ -1,5 +1,6 @@
 use std::{
     fs,
+    io::Read,
     path::{Component, Path, PathBuf},
     sync::Arc,
 };
@@ -137,12 +138,21 @@ fn read_file(root: &Path, arguments: &Value) -> Result<String, KernelError> {
         return Err(KernelError::Tool);
     }
 
-    let metadata = fs::metadata(&canonical).map_err(|_| KernelError::Tool)?;
+    let file = fs::File::open(&canonical).map_err(|_| KernelError::Tool)?;
+    let metadata = file.metadata().map_err(|_| KernelError::Tool)?;
     if !metadata.is_file() || metadata.len() > MAX_READ_FILE_BYTES {
         return Err(KernelError::Tool);
     }
 
-    fs::read_to_string(canonical).map_err(|_| KernelError::Tool)
+    let mut content = String::new();
+    let bytes_read = file
+        .take(MAX_READ_FILE_BYTES + 1)
+        .read_to_string(&mut content)
+        .map_err(|_| KernelError::Tool)?;
+    if bytes_read as u64 > MAX_READ_FILE_BYTES {
+        return Err(KernelError::Tool);
+    }
+    Ok(content)
 }
 
 fn list_files(root: &Path, arguments: &Value) -> Result<String, KernelError> {
@@ -421,6 +431,24 @@ mod tests {
         assert_eq!(names, vec!["alpha.txt", "folder", "zeta.txt"]);
         assert_eq!(parsed["path"], ".");
         assert_eq!(parsed["truncated"], false);
+    }
+
+    #[tokio::test]
+    async fn truncates_large_directory_listings() {
+        let workspace = TempWorkspace::new();
+        for index in 0..(MAX_DIRECTORY_ENTRIES + 5) {
+            workspace.write(&format!("file-{index:03}.txt"), "x");
+        }
+        let invoker = WorkspaceToolInvoker::new(&workspace.path).unwrap();
+
+        let listing = invoker.invoke(LIST_FILES_TOOL, "{}").await.unwrap();
+        let parsed: Value = serde_json::from_str(&listing).unwrap();
+
+        assert_eq!(
+            parsed["entries"].as_array().unwrap().len(),
+            MAX_DIRECTORY_ENTRIES
+        );
+        assert_eq!(parsed["truncated"], true);
     }
 
     #[tokio::test]
