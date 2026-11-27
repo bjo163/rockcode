@@ -77,10 +77,8 @@ pub struct CompletionResponse {
 
 #[async_trait]
 pub trait ModelGateway: Send + Sync {
-    async fn complete(
-        &self,
-        request: CompletionRequest,
-    ) -> Result<CompletionResponse, KernelError>;
+    async fn complete(&self, request: CompletionRequest)
+        -> Result<CompletionResponse, KernelError>;
 }
 
 #[async_trait]
