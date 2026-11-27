@@ -203,16 +203,12 @@ mod tests {
             Some(ProviderConfigError::EmptyApiKey)
         );
         assert_eq!(
-            OpenAiCompatibleConfig::new("http://provider.example.test/v1", "secret", "model")
-                .err(),
+            OpenAiCompatibleConfig::new("http://provider.example.test/v1", "secret", "model").err(),
             Some(ProviderConfigError::InvalidBaseUrl)
         );
-        assert!(OpenAiCompatibleConfig::new(
-            "http://127.0.0.1:43170/v1",
-            "secret",
-            "model"
-        )
-        .is_ok());
+        assert!(
+            OpenAiCompatibleConfig::new("http://127.0.0.1:43170/v1", "secret", "model").is_ok()
+        );
         assert_eq!(
             OpenAiCompatibleConfig::new("https://api.example.test/v1", "secret", "").err(),
             Some(ProviderConfigError::EmptyModel)
