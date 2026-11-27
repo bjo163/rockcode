@@ -79,4 +79,3 @@ fn arch_boundary_allowlist() {
         "reqwest must stay at provider and SDK transport boundaries"
     );
 }
-}
