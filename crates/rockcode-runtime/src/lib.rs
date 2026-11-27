@@ -299,6 +299,15 @@ mod tests {
         }
     }
 
+    struct SequencePolicy(Mutex<VecDeque<ToolDecision>>);
+
+    #[async_trait]
+    impl ToolPolicy for SequencePolicy {
+        async fn authorize(&self, _call: &ToolCall) -> Result<ToolDecision, KernelError> {
+            self.0.lock().unwrap().pop_front().ok_or(KernelError::Tool)
+        }
+    }
+
     fn read_file_call() -> rockcode_kernel::CompletionResponse {
         rockcode_kernel::CompletionResponse {
             content: String::new(),
@@ -390,20 +399,33 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn approval_required_never_executes_any_call_in_a_tool_batch() {
-        let mut second = read_file_call();
-        second.tool_calls[0].id = "call_write_2".to_string();
-        second.tool_calls[0].name = "workspace.write_file".to_string();
-        let gateway = Arc::new(FakeGateway::new(vec![read_file_call(), final_response()]));
+    async fn one_pending_approval_holds_the_entire_tool_batch() {
+        let mut batch = read_file_call();
+        batch.tool_calls.push(ToolCall {
+            id: "call_write_2".to_string(),
+            name: "workspace.write_file".to_string(),
+            arguments: "{\"path\":\"README.md\",\"content\":\"updated\"}".to_string(),
+        });
+        let gateway = Arc::new(FakeGateway::new(vec![batch]));
         let sink = Arc::new(RecordingSink::default());
         let tools = Arc::new(FakeTools::new());
-        let policy = Arc::new(FixedPolicy(ToolDecision::ApprovalRequired));
+        let policy = Arc::new(SequencePolicy(Mutex::new(VecDeque::from([
+            ToolDecision::Allow,
+            ToolDecision::ApprovalRequired,
+        ]))));
         let runtime = Runtime::with_tools(gateway, sink.clone(), tools.clone(), policy);
 
         let result = runtime
             .run_agent(
-                vec![ChatMessage::user("Read README")],
-                vec![read_file_definition()],
+                vec![ChatMessage::user("Read and update README")],
+                vec![
+                    read_file_definition(),
+                    ToolDefinition {
+                        name: "workspace.write_file".to_string(),
+                        description: "Write one file".to_string(),
+                        parameters: json!({"type":"object"}),
+                    },
+                ],
                 &CancellationToken::new(),
                 2,
             )
@@ -411,9 +433,17 @@ mod tests {
             .unwrap();
 
         assert_eq!(result.status, RunStatus::WaitingApproval);
-        assert_eq!(result.pending_approvals, vec!["call_read_1"]);
+        assert_eq!(result.pending_approvals, vec!["call_write_2"]);
         assert_eq!(tools.calls.load(Ordering::SeqCst), 0);
-        assert!(sink.events.lock().unwrap().iter().any(|event| event.contains("tool.approval_required")));
+        assert_eq!(
+            sink.events
+                .lock()
+                .unwrap()
+                .iter()
+                .filter(|event| event.contains("tool.approval_required"))
+                .count(),
+            1
+        );
     }
 
     #[tokio::test]
