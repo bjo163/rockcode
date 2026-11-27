@@ -25,8 +25,13 @@ jobs:
         run: cargo test --workspace
       - name: arch test
         run: cargo test -p rockcode-arch-tests
+      - name: install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny@0.22.0
+          fallback: none
       - name: deny
-        run: cargo deny check || true
+        run: cargo deny check
       - name: cargo tree
         run: cargo tree -e features | tee cargo-tree.txt
       - name: upload Rust build evidence and resolved lockfile

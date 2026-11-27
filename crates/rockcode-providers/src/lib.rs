@@ -1,12 +1,13 @@
 use std::{env, time::Duration};
 
 use async_trait::async_trait;
-use reqwest::{Client, Url};
+use reqwest::Client;
 use rockcode_kernel::{
     ChatMessage, CompletionRequest, CompletionResponse, KernelError, ModelGateway,
 };
 use serde_json::{json, Value};
 use thiserror::Error;
+use url::Url;
 
 const DEFAULT_TIMEOUT: Duration = Duration::from_secs(90);
 

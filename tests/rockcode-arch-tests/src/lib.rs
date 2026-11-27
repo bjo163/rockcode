@@ -24,7 +24,22 @@ fn arch_boundary_allowlist() {
             }
         }
     }
-    // kernel must not depend on server/storage/provider/UI/tauri
+    // Keep network and UI transports out of domain and kernel layers.
+    let forbidden_kernel_dependencies = [
+        "rockcode-server",
+        "rockcode-storage",
+        "rockcode-providers",
+        "reqwest",
+        "axum",
+        "tauri",
+        "wry",
+        "sqlx",
+        "postgres",
+        "tokio-postgres",
+        "redis",
+        "wasmtime",
+    ];
+
     for p in packages {
         let name = p["name"].as_str().unwrap_or("");
         if name == "rockcode-kernel" {
@@ -33,18 +48,34 @@ fn arch_boundary_allowlist() {
                 .cloned()
                 .unwrap_or_else(Vec::new);
             for d in deps {
-                let dn = d["name"].as_str().unwrap_or("");
-                assert!(dn != "rockcode-server", "kernel must not depend on server");
+                let dependency = d["name"].as_str().unwrap_or("");
                 assert!(
-                    dn != "rockcode-storage",
-                    "kernel must not depend on storage"
+                    !forbidden_kernel_dependencies.contains(&dependency),
+                    "rockcode-kernel must not depend on {dependency}"
                 );
-                assert!(
-                    dn != "rockcode-providers",
-                    "kernel must not depend on providers"
-                );
-                assert!(dn != "tauri", "kernel must not depend on tauri");
             }
         }
     }
+
+    // reqwest is permitted only at the provider transport and public SDK boundaries.
+    let mut reqwest_owners: Vec<&str> = packages
+        .iter()
+        .filter_map(|p| {
+            let dependencies = p["dependencies"].as_array()?;
+            let uses_reqwest = dependencies
+                .iter()
+                .any(|dependency| dependency["name"].as_str() == Some("reqwest"));
+            if uses_reqwest {
+                p["name"].as_str()
+            } else {
+                None
+            }
+        })
+        .collect();
+    reqwest_owners.sort_unstable();
+    assert_eq!(
+        reqwest_owners,
+        vec!["rockcode-providers", "rockcode-sdk"],
+        "reqwest must stay at provider and SDK transport boundaries"
+    );
 }
