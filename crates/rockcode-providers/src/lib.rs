@@ -39,10 +39,15 @@ impl OpenAiCompatibleConfig {
     ) -> Result<Self, ProviderConfigError> {
         let base_url = base_url.into().trim_end_matches('/').to_string();
         let parsed_url = Url::parse(&base_url).map_err(|_| ProviderConfigError::InvalidBaseUrl)?;
+        let host = parsed_url.host_str().unwrap_or_default();
+        let loopback_host = matches!(host, "localhost" | "127.0.0.1" | "[::1]" | "::1");
         if !matches!(parsed_url.scheme(), "http" | "https")
-            || parsed_url.host_str().is_none()
+            || host.is_empty()
             || parsed_url.query().is_some()
             || parsed_url.fragment().is_some()
+            || !parsed_url.username().is_empty()
+            || parsed_url.password().is_some()
+            || (parsed_url.scheme() == "http" && !loopback_host)
         {
             return Err(ProviderConfigError::InvalidBaseUrl);
         }
@@ -197,6 +202,17 @@ mod tests {
             OpenAiCompatibleConfig::new("https://api.example.test/v1", "", "model").err(),
             Some(ProviderConfigError::EmptyApiKey)
         );
+        assert_eq!(
+            OpenAiCompatibleConfig::new("http://provider.example.test/v1", "secret", "model")
+                .err(),
+            Some(ProviderConfigError::InvalidBaseUrl)
+        );
+        assert!(OpenAiCompatibleConfig::new(
+            "http://127.0.0.1:43170/v1",
+            "secret",
+            "model"
+        )
+        .is_ok());
         assert_eq!(
             OpenAiCompatibleConfig::new("https://api.example.test/v1", "secret", "").err(),
             Some(ProviderConfigError::EmptyModel)
