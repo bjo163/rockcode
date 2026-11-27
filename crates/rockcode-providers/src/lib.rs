@@ -1,7 +1,8 @@
 use std::{env, time::Duration};
 
 use async_trait::async_trait;
-use reqwest::{Client, Url};
+use reqwest::Client;
+use url::Url;
 use rockcode_kernel::{
     ChatMessage, CompletionRequest, CompletionResponse, KernelError, ModelGateway,
 };
