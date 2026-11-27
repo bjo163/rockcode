@@ -3,7 +3,6 @@ allow = ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Unicode-DF
 
 [bans]
 deny = [
-    { name = "reqwest", wrappers = [] },
     { name = "sqlx", wrappers = [] },
     { name = "postgres", wrappers = [] },
     { name = "tokio-postgres", wrappers = [] },
