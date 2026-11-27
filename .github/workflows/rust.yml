@@ -26,7 +26,7 @@ jobs:
       - name: arch test
         run: cargo test -p rockcode-arch-tests
       - name: deny
-        run: cargo deny check || true
+        run: cargo deny check
       - name: cargo tree
         run: cargo tree -e features | tee cargo-tree.txt
       - name: upload Rust build evidence and resolved lockfile
